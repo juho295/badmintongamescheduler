@@ -5,135 +5,175 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Badminton Game Scheduler</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding-top: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: 100vh;
-        }
 
-        .container {
-            display: flex;
-            justify-content: space-between;
-            width: 80%;
-            max-width: 1200px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
 
-        .left-panel, .right-panel {
-            width: 48%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+/* Base styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 10px;
+    min-height: 100vh;
+}
 
-        .left-panel {
-            text-align: center;
-        }
+.container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
 
-        .right-panel {
-            border-left: 1px solid #ddd;
-            padding-left: 20px;
-        }
+/* Panel styles */
+.left-panel, .right-panel {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+}
 
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 10px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+.right-panel {
+    border-left: none;
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+    padding-top: 20px;
+}
 
-        button:hover {
-            background-color: #45a049;
-        }
+/* Input styles */
+.input-group {
+    margin: 15px 0;
+    width: 100%;
+}
 
-        h1 {
-            color: #333;
-        }
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
 
-        .input-group {
-            margin: 10px 0;
-        }
+input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
 
-        label {
-            font-weight: bold;
-        }
+/* Button styles */
+button {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
 
-        input {
-            padding: 8px;
-            font-size: 16px;
-            width: 200px;
-            margin: 5px 10px;
-            text-align: center;
-        }
+button:hover {
+    background-color: #45a049;
+}
 
-        #scheduleOutput {
-            margin-top: 20px;
-            text-align: left;
-        }
+/* Table styles */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: 15px 0;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
+table {
+    min-width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
 
-        table, th, td {
-            border: 1px solid #ddd;
-        }
+th, td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+}
 
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
+th {
+    background-color: #f2f2f2;
+}
 
-        th {
-            background-color: #f2f2f2;
-        }
+/* Round container styles */
+.round-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
 
-        /* Pop-up styling */
-        .popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+.games-table, .waiting-table {
+    width: 100%;
+}
 
-        .popup-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 900px;
-            overflow-y: auto;
-        }
+.waiting-table {
+    margin-top: 15px;
+}
 
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
+/* Popup styles */
+.popup {
+    padding: 10px;
+}
 
-        .close-btn:hover {
-            color: black;
-        }
+.popup-content {
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    padding: 15px;
+    margin: 10px auto;
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+    .container {
+        display: flex;
+        padding: 20px;
+    }
+
+    .left-panel, .right-panel {
+        width: 48%;
+    }
+
+    .right-panel {
+        border-left: 1px solid #ddd;
+        border-top: none;
+        margin-top: 0;
+        padding-top: 15px;
+    }
+
+    button {
+        width: auto;
+        margin: 10px;
+    }
+
+    .round-container {
+        flex-direction: row;
+    }
+
+    .games-table {
+        flex: 1;
+    }
+
+    .waiting-table {
+        width: 200px;
+        margin-top: 0;
+    }
+
+    .popup-content {
+        padding: 20px;
+    }
+}
+
+        
     </style>
 </head>
 <body>
@@ -148,7 +188,7 @@
 
             <div class="input-group">
                 <label for="numPlayers">Number of Players:</label>
-                <input type="number" id="numPlayers" value="12" min="4" max="16">
+                <input type="number" id="numPlayers" value="12" min="4" max="20">
             </div>
 
             <div id="playerInputs"></div>
@@ -167,7 +207,7 @@
     <div id="popup" class="popup">
         <div class="popup-content">
             <span class="close-btn" id="closePopupBtn">&times;</span>
-            <h2>Player Pairing Information</h2>
+            <h2>Repeated Player Pairing Information</h2>
 
             <!-- Section for Players Repeated More Than 3 Times Against Same Opponent -->
             <h3>Players Repeated More Than 2 Times Against Same Opponent</h3>
@@ -202,34 +242,79 @@
     </div>
 
     <script>
+
 const defaultPlayers = [
     "Player 1", "Player 2", "Player 3", "Player 4", "Player 5",
     "Player 6", "Player 7", "Player 8", "Player 9", "Player 10",
-    "Player 11", "Player 12", "Player 13", "Player 14", "Player 15", "Player 16"
+    "Player 11", "Player 12", "Player 13", "Player 14", "Player 15", "Player 16",
+    "Player 17", "Player 18", "Player 19", "Player 20"
 ];
 
 let currentSchedule = [];
-const MAX_ATTEMPTS = 100; // Maximum attempts to generate a valid schedule
-const MAX_PAIR_ATTEMPTS = 50; // Maximum attempts to find valid pairs for a round
+const MAX_ATTEMPTS = 100;
+const MAX_PAIR_ATTEMPTS = 50;
+
+function getPlayerRank(player) {
+    // If it's a default player, get their rank number
+    if (player.startsWith('Player ')) {
+        return parseInt(player.replace('Player ', ''));
+    }
+    // For custom names, assign them the same rank as their input position
+    const inputs = document.querySelectorAll('[id^="player"]');
+    for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i].value === player) {
+            return i + 1;
+        }
+    }
+    return 1; // fallback rank
+}
+
+
+function calculateTeamStrength(team) {
+    return team.reduce((sum, player) => sum + getPlayerRank(player), 0);
+}
+
+
 
 function generateSchedule(numPlayers, numCourts, players) {
     const rounds = 9;
+    const playersPerRound = numCourts * 4;
+    const playerStats = {};
+    
+    // Initialize player stats
+    players.forEach(player => {
+        playerStats[player] = 0; // Count of games played
+    });
+
     let bestSchedule = null;
     let bestScore = Infinity;
 
-    // Try multiple times to get the best possible schedule
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         const schedule = [];
-        const pairHistory = new Map(); // Track how often players have played together
+        const pairHistory = new Map();
         let isValid = true;
 
         for (let round = 1; round <= rounds; round++) {
-            const roundResult = generateRound(players, numCourts, pairHistory, round);
+            // Sort players by number of games played
+            const sortedPlayers = [...players].sort((a, b) => {
+                return playerStats[a] - playerStats[b];
+            });
+
+            // Select players for this round (prioritize those who played less)
+            const roundPlayers = sortedPlayers.slice(0, playersPerRound);
+            const waitingPlayers = sortedPlayers.slice(playersPerRound);
+
+            const roundResult = generateRound(roundPlayers, numCourts, pairHistory, round, waitingPlayers);
 
             if (!roundResult) {
                 isValid = false;
                 break;
             }
+
+            // Update player stats
+            roundPlayers.forEach(player => {
+                playerStats[player]++;
+            });
 
             updatePairHistory(roundResult, pairHistory);
             schedule.push(roundResult);
@@ -244,25 +329,27 @@ function generateSchedule(numPlayers, numCourts, players) {
         }
     }
 
-    return bestSchedule || []; // Return best schedule or empty array if none found
+    return bestSchedule || [];
 }
 
-function generateRound(players, numCourts, pairHistory, roundNum) {
+
+function generateRound(availablePlayers, numCourts, pairHistory, roundNum, waitingPlayers) {
     let attempts = 0;
     while (attempts < MAX_PAIR_ATTEMPTS) {
-        const availablePlayers = [...players];
+        const playersForRound = [...availablePlayers];
         const roundMatches = [];
-        shuffle(availablePlayers);
+        shuffle(playersForRound);
 
         let success = true;
-        for (let court = 1; court <= numCourts && availablePlayers.length >= 4; court++) {
-            const match = findValidMatch(availablePlayers, pairHistory);
+        for (let court = 1; court <= numCourts && playersForRound.length >= 4; court++) {
+            const match = findValidMatch(playersForRound, pairHistory);
             if (!match) {
                 success = false;
                 break;
             }
             match.round = roundNum;
             match.court = court;
+            match.waitingPlayers = waitingPlayers;
             roundMatches.push(match);
         }
 
@@ -274,10 +361,10 @@ function generateRound(players, numCourts, pairHistory, roundNum) {
     return null;
 }
 
+
 function findValidMatch(availablePlayers, pairHistory) {
     if (availablePlayers.length < 4) return null;
 
-    // Try to find valid teams with the least history together
     let bestMatch = null;
     let bestScore = Infinity;
 
@@ -285,21 +372,30 @@ function findValidMatch(availablePlayers, pairHistory) {
         for (let j = i + 1; j < Math.min(11, availablePlayers.length); j++) {
             for (let k = j + 1; k < Math.min(12, availablePlayers.length); k++) {
                 for (let l = k + 1; l < Math.min(13, availablePlayers.length); l++) {
-                    const team1 = [availablePlayers[i], availablePlayers[j]];
-                    const team2 = [availablePlayers[k], availablePlayers[l]];
+                    const possibleTeams = [
+                        {
+                            team1: [availablePlayers[i], availablePlayers[l]],
+                            team2: [availablePlayers[j], availablePlayers[k]]
+                        },
+                        {
+                            team1: [availablePlayers[i], availablePlayers[k]],
+                            team2: [availablePlayers[j], availablePlayers[l]]
+                        }
+                    ];
 
-                    const score = evaluateMatch(team1, team2, pairHistory);
-                    if (score < bestScore) {
-                        bestScore = score;
-                        bestMatch = { team1, team2 };
-                    }
+                    possibleTeams.forEach(match => {
+                        const score = evaluateMatch(match.team1, match.team2, pairHistory);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestMatch = match;
+                        }
+                    });
                 }
             }
         }
     }
 
     if (bestMatch) {
-        // Remove selected players from available players
         [...bestMatch.team1, ...bestMatch.team2].forEach(player => {
             const index = availablePlayers.indexOf(player);
             if (index > -1) {
@@ -313,16 +409,35 @@ function findValidMatch(availablePlayers, pairHistory) {
 
 function evaluateMatch(team1, team2, pairHistory) {
     let score = 0;
-    // Evaluate partner history
+    
+    // Calculate team strengths
+    const team1Strength = calculateTeamStrength(team1);
+    const team2Strength = calculateTeamStrength(team2);
+    
+    // Heavily penalize unbalanced matches
+    const strengthDifference = Math.abs(team1Strength - team2Strength);
+    score += strengthDifference * 20;
+    
+    // Penalize pairing very high-skilled players together
+    const team1SkillGap = Math.abs(getPlayerRank(team1[0]) - getPlayerRank(team1[1]));
+    const team2SkillGap = Math.abs(getPlayerRank(team2[0]) - getPlayerRank(team2[1]));
+    
+    // Encourage pairing high-skilled with lower-skilled players
+    if (team1SkillGap < 3 || team2SkillGap < 3) {
+        score += 50;
+    }
+    
+    // Consider partner history
     score += getPartnerHistory(team1[0], team1[1], pairHistory) * 10;
     score += getPartnerHistory(team2[0], team2[1], pairHistory) * 10;
-
-    // Evaluate opponent history
+    
+    // Consider opponent history
     for (const player1 of team1) {
         for (const player2 of team2) {
             score += getOpponentHistory(player1, player2, pairHistory) * 8;
         }
     }
+    
     return score;
 }
 
@@ -376,11 +491,12 @@ function shuffle(array) {
     }
 }
 
+
 function displaySchedule(schedule) {
     const scheduleOutput = document.getElementById("scheduleOutput");
     scheduleOutput.innerHTML = "";
 
-    let scheduleText = "Badminton Game Scheduler\n\n";
+    let scheduleText = "Badminton Game Schedule\n\n";
 
     schedule.forEach(round => {
         const roundTitle = document.createElement("h3");
@@ -388,31 +504,76 @@ function displaySchedule(schedule) {
         scheduleOutput.appendChild(roundTitle);
         scheduleText += `Round ${round[0].round}\n`;
 
+        const roundContainer = document.createElement("div");
+        roundContainer.className = "round-container";
+
+        // Games table
+        const gamesTableDiv = document.createElement("div");
+        gamesTableDiv.className = "games-table";
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
         const roundTable = document.createElement("table");
         const roundHeader = document.createElement("tr");
-        roundHeader.innerHTML = `<th>Round</th><th>Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
+        roundHeader.innerHTML = `<th>Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
         roundTable.appendChild(roundHeader);
 
         round.forEach(match => {
             const matchRow = document.createElement("tr");
             matchRow.innerHTML = `
-                <td>${match.round}</td>
                 <td>${match.court}</td>
                 <td class="team1">${match.team1.join(" & ")}</td>
                 <td class="team2">${match.team2.join(" & ")}</td>
             `;
             roundTable.appendChild(matchRow);
         });
+        tableContainer.appendChild(roundTable);
+        gamesTableDiv.appendChild(tableContainer);
+        roundContainer.appendChild(gamesTableDiv);
 
-        scheduleOutput.appendChild(roundTable);
-        scheduleText += roundTable.innerText + "\n";
+        // Waiting players table
+        if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+            const waitingTableDiv = document.createElement("div");
+            waitingTableDiv.className = "waiting-table";
+            const waitingTable = document.createElement("table");
+            const waitingHeader = document.createElement("tr");
+            waitingHeader.innerHTML = `<th>Waiting Players</th>`;
+            waitingTable.appendChild(waitingHeader);
+
+            round[0].waitingPlayers.forEach(player => {
+                const playerRow = document.createElement("tr");
+                playerRow.innerHTML = `<td>${player}</td>`;
+                waitingTable.appendChild(playerRow);
+            });
+            waitingTableDiv.appendChild(waitingTable);
+            roundContainer.appendChild(waitingTableDiv);
+        }
+
+        scheduleOutput.appendChild(roundContainer);
     });
 
+    // Add download button
     const downloadBtn = document.getElementById("downloadScheduleBtn");
     downloadBtn.style.display = "inline-block";
 
+    // Update download functionality
     downloadBtn.onclick = function() {
-        const blob = new Blob([scheduleText], { type: "text/plain" });
+        let downloadText = "Badminton Game Schedule\n\n";
+        schedule.forEach(round => {
+            downloadText += `Round ${round[0].round}\n`;
+            downloadText += "Courts:\n";
+            round.forEach(match => {
+                downloadText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
+            });
+            if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+                downloadText += "\nWaiting Players:\n";
+                round[0].waitingPlayers.forEach(player => {
+                    downloadText += `${player}\n`;
+                });
+            }
+            downloadText += "\n";
+        });
+
+        const blob = new Blob([downloadText], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "badminton_schedule.txt";
@@ -420,11 +581,13 @@ function displaySchedule(schedule) {
     };
 }
 
+
+
 function getPlayerPairingInfo(schedule) {
     let playerOpponentCount = {};
     let playerPartnerCount = {};
-    let opponentInstances = {};
-    let partnerInstances = {};
+    let opponentInstances = new Set(); // Changed to Set to handle unique pairs
+    let partnerInstances = new Set(); // Changed to Set to handle unique pairs
 
     schedule.forEach(round => {
         round.forEach(match => {
@@ -454,8 +617,9 @@ function getPlayerPairingInfo(schedule) {
     for (let player in playerOpponentCount) {
         for (let opponent in playerOpponentCount[player]) {
             if (playerOpponentCount[player][opponent] > 2) {
-                if (!opponentInstances[player]) opponentInstances[player] = [];
-                opponentInstances[player].push(opponent);
+                // Create a sorted pair to ensure uniqueness
+                const pair = [player, opponent].sort().join('-');
+                opponentInstances.add(pair);
             }
         }
     }
@@ -464,12 +628,34 @@ function getPlayerPairingInfo(schedule) {
     for (let player in playerPartnerCount) {
         for (let partner in playerPartnerCount[player]) {
             if (playerPartnerCount[player][partner] > 1) {
-                if (!partnerInstances[player]) partnerInstances[player] = [];
-                partnerInstances[player].push(partner);
+                // Create a sorted pair to ensure uniqueness
+                const pair = [player, partner].sort().join('-');
+                partnerInstances.add(pair);
             }
         }
     }
-    return { opponentInstances, partnerInstances };
+
+    // Convert Sets of pairs back to a format suitable for display
+    const formattedOpponents = Array.from(opponentInstances).map(pair => {
+        const [player1, player2] = pair.split('-');
+        return { player: player1, opponent: player2 };
+    });
+
+    const formattedPartners = Array.from(partnerInstances).map(pair => {
+        const [player1, player2] = pair.split('-');
+        return { player: player1, partner: player2 };
+    });
+
+    return { 
+        opponentInstances: formattedOpponents,
+        partnerInstances: formattedPartners 
+    };
+}
+
+
+
+function getPlayerRankForSort(playerName) {
+    return parseInt(playerName.replace('Player ', ''));
 }
 
 function displayPairingInfo(pairingInfo) {
@@ -479,26 +665,34 @@ function displayPairingInfo(pairingInfo) {
     opponentTableBody.innerHTML = "";
     partnerTableBody.innerHTML = "";
 
-    // Display opponent instances with round numbers
-    for (let player in pairingInfo.opponentInstances) {
-        pairingInfo.opponentInstances[player].forEach(opponent => {
-            const row = opponentTableBody.insertRow();
-            row.insertCell(0).textContent = player;
-            row.insertCell(1).textContent = opponent;
-            row.insertCell(2).textContent = getRoundsForOpponent(player, opponent);
-        });
-    }
+    // Sort opponent instances by player rank (ascending)
+    const sortedOpponents = [...pairingInfo.opponentInstances].sort((a, b) => {
+        return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
+    });
 
-    // Display partner instances with round numbers
-    for (let player in pairingInfo.partnerInstances) {
-        pairingInfo.partnerInstances[player].forEach(partner => {
-            const row = partnerTableBody.insertRow();
-            row.insertCell(0).textContent = player;
-            row.insertCell(1).textContent = partner;
-            row.insertCell(2).textContent = getRoundsForPartner(player, partner);
-        });
-    }
+    // Sort partner instances by player rank (ascending)
+    const sortedPartners = [...pairingInfo.partnerInstances].sort((a, b) => {
+        return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
+    });
+
+
+    // Display sorted opponent instances with round numbers
+    sortedOpponents.forEach(pair => {
+        const row = opponentTableBody.insertRow();
+        row.insertCell(0).textContent = pair.player;
+        row.insertCell(1).textContent = pair.opponent;
+        row.insertCell(2).textContent = getRoundsForOpponent(pair.player, pair.opponent);
+    });
+
+    // Display sorted partner instances with round numbers
+    sortedPartners.forEach(pair => {
+        const row = partnerTableBody.insertRow();
+        row.insertCell(0).textContent = pair.player;
+        row.insertCell(1).textContent = pair.partner;
+        row.insertCell(2).textContent = getRoundsForPartner(pair.player, pair.partner);
+    });
 }
+
 
 function getRoundsForOpponent(player, opponent) {
     let rounds = [];
@@ -533,35 +727,66 @@ function getRoundsForPartner(player, partner) {
 function getCustomPlayerNames(numPlayers) {
     const customPlayers = [];
     for (let i = 0; i < numPlayers; i++) {
-        const playerInput = document.getElementById(`player${i + 1}`).value;
-        customPlayers.push(playerInput || defaultPlayers[i]);
+        const input = document.getElementById(`player${i + 1}`);
+        const playerName = input?.value?.trim();
+        // Only add non-empty player names
+        if (playerName) {
+            customPlayers.push(playerName);
+        } else {
+            customPlayers.push(defaultPlayers[i]);
+        }
     }
     return customPlayers;
 }
 
+
 function generatePlayerInputs(numPlayers) {
     const playerInputsContainer = document.getElementById("playerInputs");
+    // Store existing values before clearing
+    const existingValues = {};
+    const currentInputs = playerInputsContainer.querySelectorAll('input');
+    currentInputs.forEach(input => {
+        existingValues[input.id] = input.value;
+    });
+    
     playerInputsContainer.innerHTML = "";
 
     for (let i = 0; i < numPlayers; i++) {
         const playerInputGroup = document.createElement("div");
         playerInputGroup.className = "input-group";
+        const inputId = `player${i + 1}`;
+        
+        // Use existing value if available, otherwise use default
+        const value = existingValues[inputId] || defaultPlayers[i];
+        
         playerInputGroup.innerHTML = `
-            <label for="player${i + 1}">Player ${i + 1}:</label>
-            <input type="text" id="player${i + 1}" value="${defaultPlayers[i]}" />
+            <label for="${inputId}">Player ${i + 1}:</label>
+            <input type="text" id="${inputId}" value="${value}" />
         `;
         playerInputsContainer.appendChild(playerInputGroup);
     }
 }
+
 
 // Event Listeners
 document.getElementById("generateScheduleBtn").addEventListener("click", () => {
     const numPlayers = parseInt(document.getElementById("numPlayers").value);
     const numCourts = parseInt(document.getElementById("numCourts").value);
     const customPlayers = getCustomPlayerNames(numPlayers);
+    
+    // Validate we have enough players
+    if (customPlayers.length < 4) {
+        alert("Need at least 4 players to generate a schedule");
+        return;
+    }
+    
     const schedule = generateSchedule(numPlayers, numCourts, customPlayers);
-    currentSchedule = schedule;
-    displaySchedule(schedule);
+    if (schedule && schedule.length > 0) {
+        currentSchedule = schedule;
+        displaySchedule(schedule);
+    } else {
+        alert("Could not generate a valid schedule. Please try again.");
+    }
 });
 
 document.getElementById("showPopupBtn").addEventListener("click", () => {
@@ -574,12 +799,24 @@ document.getElementById("closePopupBtn").addEventListener("click", () => {
     document.getElementById("popup").style.display = "none";
 });
 
+// Update the numPlayers change handler
 document.getElementById("numPlayers").addEventListener("change", (e) => {
-    generatePlayerInputs(parseInt(e.target.value));
+    const newNum = parseInt(e.target.value);
+    if (newNum >= 4 && newNum <= 20) {
+        generatePlayerInputs(newNum);
+    } else {
+        alert("Please enter a number between 4 and 20 players");
+        e.target.value = 12; // Reset to default
+        generatePlayerInputs(12);
+    }
 });
 
 // Initialize player inputs
 generatePlayerInputs(parseInt(document.getElementById("numPlayers").value));
     </script>
+
+
+
+
 </body>
 </html>
