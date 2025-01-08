@@ -5,173 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Badminton Game Scheduler</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+        }
 
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
 
-/* Base styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    margin: 0;
-    padding: 10px;
-    min-height: 100vh;
-}
+        .left-panel, .right-panel {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-.container {
-    width: 95%;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-}
+        .left-panel {
+            text-align: center;
+        }
 
-/* Panel styles */
-.left-panel, .right-panel {
-    width: 100%;
-    padding: 15px;
-    box-sizing: border-box;
-}
+        .right-panel {
+            border-left: 1px solid #ddd;
+            padding-left: 20px;
+        }
 
-.right-panel {
-    border-left: none;
-    border-top: 1px solid #ddd;
-    margin-top: 20px;
-    padding-top: 20px;
-}
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-/* Input styles */
-.input-group {
-    margin: 15px 0;
-    width: 100%;
-}
+        button:hover {
+            background-color: #45a049;
+        }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
+        h1 {
+            color: #333;
+        }
 
-input {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    margin: 5px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
+        .input-group {
+            margin: 10px 0;
+        }
 
-/* Button styles */
-button {
-    width: 100%;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-}
+        label {
+            font-weight: bold;
+        }
 
-button:hover {
-    background-color: #45a049;
-}
+        input {
+            padding: 8px;
+            font-size: 16px;
+            width: 200px;
+            margin: 5px 10px;
+            text-align: center;
+        }
 
-/* Table styles */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    margin: 15px 0;
-}
+        #scheduleOutput {
+            margin-top: 20px;
+            text-align: left;
+        }
 
-table {
-    min-width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-th, td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-    white-space: nowrap;
-}
+        table, th, td {
+            border: 1px solid #ddd;
+        }
 
-th {
-    background-color: #f2f2f2;
-}
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
 
-/* Round container styles */
-.round-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-}
+        th {
+            background-color: #f2f2f2;
+        }
 
-.games-table, .waiting-table {
-    width: 100%;
-}
+        /* Pop-up styling */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* Changed to viewport height */
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: flex-start; /* Changed from center to flex-start */
+            z-index: 1000;
+            overflow-y: auto; /* Added scroll to main popup */
+            padding: 20px 0; /* Added padding to ensure content doesn't touch edges */
+        }
 
-.waiting-table {
-    margin-top: 15px;
-}
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 90vh; /* Added max-height */
+            overflow-y: auto; /* Added scroll to content */
+            margin: auto; /* Center the content */
+        }
 
-/* Popup styles */
-.popup {
-    padding: 10px;
-}
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
 
-.popup-content {
-    width: 95%;
-    max-width: 900px;
-    max-height: 90vh;
-    padding: 15px;
-    margin: 10px auto;
-}
+        .close-btn:hover {
+            color: black;
+        }
 
-/* Desktop styles */
-@media (min-width: 768px) {
-    .container {
-        display: flex;
-        padding: 20px;
-    }
-
-    .left-panel, .right-panel {
-        width: 48%;
-    }
-
-    .right-panel {
-        border-left: 1px solid #ddd;
-        border-top: none;
-        margin-top: 0;
-        padding-top: 15px;
-    }
-
-    button {
-        width: auto;
-        margin: 10px;
-    }
-
-    .round-container {
-        flex-direction: row;
-    }
-
-    .games-table {
-        flex: 1;
-    }
-
-    .waiting-table {
-        width: 200px;
-        margin-top: 0;
-    }
-
-    .popup-content {
-        padding: 20px;
-    }
-}
 
         
     </style>
@@ -492,6 +459,8 @@ function shuffle(array) {
 }
 
 
+
+
 function displaySchedule(schedule) {
     const scheduleOutput = document.getElementById("scheduleOutput");
     scheduleOutput.innerHTML = "";
@@ -504,14 +473,14 @@ function displaySchedule(schedule) {
         scheduleOutput.appendChild(roundTitle);
         scheduleText += `Round ${round[0].round}\n`;
 
-        const roundContainer = document.createElement("div");
-        roundContainer.className = "round-container";
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.gap = "20px";
+        container.style.marginBottom = "20px";
 
         // Games table
-        const gamesTableDiv = document.createElement("div");
-        gamesTableDiv.className = "games-table";
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
+        const roundTableDiv = document.createElement("div");
+        roundTableDiv.style.flex = "1";
         const roundTable = document.createElement("table");
         const roundHeader = document.createElement("tr");
         roundHeader.innerHTML = `<th>Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
@@ -526,14 +495,12 @@ function displaySchedule(schedule) {
             `;
             roundTable.appendChild(matchRow);
         });
-        tableContainer.appendChild(roundTable);
-        gamesTableDiv.appendChild(tableContainer);
-        roundContainer.appendChild(gamesTableDiv);
+        roundTableDiv.appendChild(roundTable);
 
         // Waiting players table
         if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
             const waitingTableDiv = document.createElement("div");
-            waitingTableDiv.className = "waiting-table";
+            waitingTableDiv.style.minWidth = "200px";
             const waitingTable = document.createElement("table");
             const waitingHeader = document.createElement("tr");
             waitingHeader.innerHTML = `<th>Waiting Players</th>`;
@@ -545,17 +512,20 @@ function displaySchedule(schedule) {
                 waitingTable.appendChild(playerRow);
             });
             waitingTableDiv.appendChild(waitingTable);
-            roundContainer.appendChild(waitingTableDiv);
+            container.appendChild(roundTableDiv);
+            container.appendChild(waitingTableDiv);
+        } else {
+            container.appendChild(roundTableDiv);
         }
 
-        scheduleOutput.appendChild(roundContainer);
+        scheduleOutput.appendChild(container);
     });
 
     // Add download button
     const downloadBtn = document.getElementById("downloadScheduleBtn");
     downloadBtn.style.display = "inline-block";
 
-    // Update download functionality
+    // Update download functionality to include waiting players
     downloadBtn.onclick = function() {
         let downloadText = "Badminton Game Schedule\n\n";
         schedule.forEach(round => {
