@@ -190,7 +190,7 @@
             </div>
 
         <div class="input-group">
-            <label for="maxOpponentRepeat">Max Same Opponent (Target):</label>
+            <label for="maxOpponentRepeat">Desired Max Same Opponent:</label>
             <input type="number" id="maxOpponentRepeat" value="2" min="1" max="9">
         </div>
         <div class="input-group">
@@ -456,17 +456,17 @@ function findValidMatch(availablePlayers, pairHistory) {
 }
 
 
+
+
 function evaluateMatch(team1, team2, pairHistory) {
     let score = 0;
-
-    // Get current thresholds from inputs
     const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
 
     // Calculate team strengths based on player ranks
     const team1Strength = calculateTeamStrength(team1);
     const team2Strength = calculateTeamStrength(team2);
 
-    // Check if any players have exceeded partnership threshold
+    // Check partnership thresholds
     const team1PartnerCount = getPartnerHistory(team1[0], team1[1], pairHistory);
     const team2PartnerCount = getPartnerHistory(team2[0], team2[1], pairHistory);
 
@@ -474,60 +474,85 @@ function evaluateMatch(team1, team2, pairHistory) {
         return Infinity;
     }
 
-    // Calculate the maximum rank difference within each team
-    const team1RankDiff = Math.abs(getPlayerRank(team1[0]) - getPlayerRank(team1[1]));
-    const team2RankDiff = Math.abs(getPlayerRank(team2[0]) - getPlayerRank(team2[1]));
+    // Get individual ranks
+    const team1Ranks = team1.map(p => getPlayerRank(p)).sort((a, b) => a - b);
+    const team2Ranks = team2.map(p => getPlayerRank(p)).sort((a, b) => a - b);
 
-    // Calculate the average rank for each team
-    const team1AvgRank = (getPlayerRank(team1[0]) + getPlayerRank(team1[1])) / 2;
-    const team2AvgRank = (getPlayerRank(team2[0]) + getPlayerRank(team2[1])) / 2;
-
-    // Heavily penalize large rank differences between teams
-    const avgRankDiff = Math.abs(team1AvgRank - team2AvgRank);
-    if (avgRankDiff > 5) {  // If average rank difference is more than 5
-        score += avgRankDiff * 200;  // Significant penalty
+    // Immediately reject extremely unbalanced matches
+    const bestRankDiff = Math.abs(team1Ranks[0] - team2Ranks[0]);
+    const worstRankDiff = Math.abs(team1Ranks[1] - team2Ranks[1]);
+    if (bestRankDiff > 4 || worstRankDiff > 4) {
+        return Infinity; // Completely reject these matches
     }
 
-    // Penalize having two high-ranked players (ranks 1-4) on the same team
-    const highRankedPlayers1 = team1.filter(p => getPlayerRank(p) <= 4).length;
-    const highRankedPlayers2 = team2.filter(p => getPlayerRank(p) <= 4).length;
-    if (highRankedPlayers1 === 2 || highRankedPlayers2 === 2) {
-        score += 500;  // Heavy penalty for two high-ranked players on same team
-    }
-
-    // Penalize pairing very high-ranked with very low-ranked players
+    // Extremely high penalty for any team having both top (1-4) and bottom (9+) players
     team1.forEach(player => {
-        if (getPlayerRank(player) <= 4) {  // For high-ranked players
+        const rank = getPlayerRank(player);
+        if (rank <= 4) {
             const partner = team1.find(p => p !== player);
-            if (getPlayerRank(partner) > 12) {  // If paired with very low-ranked player
-                score += 300;
+            const partnerRank = getPlayerRank(partner);
+            if (partnerRank >= 9) {
+                score += 2000; // Increased penalty
             }
         }
     });
     team2.forEach(player => {
-        if (getPlayerRank(player) <= 4) {
+        const rank = getPlayerRank(player);
+        if (rank <= 4) {
             const partner = team2.find(p => p !== player);
-            if (getPlayerRank(partner) > 12) {
-                score += 300;
+            const partnerRank = getPlayerRank(partner);
+            if (partnerRank >= 9) {
+                score += 2000; // Increased penalty
             }
         }
     });
 
-    // Penalize very unbalanced total team strengths
+    // Heavily penalize rank spread within teams
+    const team1RankSpread = team1Ranks[1] - team1Ranks[0];
+    const team2RankSpread = team2Ranks[1] - team2Ranks[0];
+    if (team1RankSpread > 4) score += Math.pow(team1RankSpread, 3) * 100;
+    if (team2RankSpread > 4) score += Math.pow(team2RankSpread, 3) * 100;
+
+    // Penalize overall team strength difference more aggressively
     const strengthDifference = Math.abs(team1Strength - team2Strength);
-    if (strengthDifference > 10) {  // If difference is too large
-        score += strengthDifference * 100;
+    if (strengthDifference > 4) {
+        score += Math.pow(strengthDifference, 3) * 100;
     }
 
-    // Consider opponent history
+    // Group players into tiers and penalize mixing across multiple tiers
+    function getPlayerTier(rank) {
+        if (rank <= 3) return 1;  // Top tier
+        if (rank <= 6) return 2;  // Upper middle tier
+        if (rank <= 9) return 3;  // Lower middle tier
+        return 4;                 // Bottom tier
+    }
+
+    const team1Tiers = team1.map(p => getPlayerTier(getPlayerRank(p)));
+    const team2Tiers = team2.map(p => getPlayerTier(getPlayerRank(p)));
+
+    // Penalize teams that span more than 2 tiers
+    const team1TierSpread = Math.abs(team1Tiers[0] - team1Tiers[1]);
+    const team2TierSpread = Math.abs(team2Tiers[0] - team2Tiers[1]);
+    if (team1TierSpread > 1) score += team1TierSpread * 1000;
+    if (team2TierSpread > 1) score += team2TierSpread * 1000;
+
+    // Ensure teams are from similar tiers
+    const team1AvgTier = (team1Tiers[0] + team1Tiers[1]) / 2;
+    const team2AvgTier = (team2Tiers[0] + team2Tiers[1]) / 2;
+    const tierDifference = Math.abs(team1AvgTier - team2AvgTier);
+    if (tierDifference > 0.5) score += tierDifference * 1500;
+
+    // Consider opponent history with lower weight since balance is more important
     for (const player1 of team1) {
         for (const player2 of team2) {
-            score += getOpponentHistory(player1, player2, pairHistory) * 15;
+            score += getOpponentHistory(player1, player2, pairHistory) * 10;
         }
     }
 
     return score;
 }
+
+
 
 
 
@@ -763,7 +788,7 @@ function getPlayerPairingInfo(schedule) {
 
     for (let player in playerPartnerCount) {
         for (let partner in playerPartnerCount[player]) {
-            if (playerPartnerCount[player][partner] > maxPartnerRepeat - 1) {
+            if (playerPartnerCount[player][partner] > maxPartnerRepeat - maxPartnerRepeat) { //edit here
                 const pair = [player, partner].sort().join('-');
                 partnerInstances.add(pair);
             }
@@ -798,7 +823,7 @@ function getPlayerRankForSort(playerName) {
 function displayPairingInfo(pairingInfo) {
     // Update the threshold displays in the headers
     document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
-    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner - 1;
+    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner - pairingInfo.thresholds.partner; //edit here
 
     const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
     const partnerTableBody = document.getElementById("partnerTable").getElementsByTagName('tbody')[0];
