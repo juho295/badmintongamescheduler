@@ -148,6 +148,66 @@
             color: black;
         }
 
+
+
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+
+    .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loading-content {
+        background-color: white;
+        padding: 30px 50px;
+        border-radius: 10px;
+        text-align: center;
+        transform: translateY(20px);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .loading-overlay.active .loading-content {
+        transform: translateY(0);
+    }
+
+    .loading-text {
+        margin-top: 15px;
+        font-size: 18px;
+        color: #333;
+        font-weight: bold;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #4CAF50;
+        border-radius: 50%;
+        margin: 0 auto;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+
         .waiting-players-table {
             width: 150px;
             min-width: 50px;
@@ -172,9 +232,17 @@
             }
         }
 
+
     </style>
 </head>
-<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div class="loading-text">Generating Schedule...</div>
+    </div>
+</div>
+
     <div class="container">
         <div class="left-panel">
             <h1>Enter Game Details</h1>
@@ -936,7 +1004,8 @@ function generatePlayerInputs(numPlayers) {
 
 // Event Listeners
 document.getElementById("generateScheduleBtn").addEventListener("click", () => {
-    const numPlayers = parseInt(document.getElementById("numPlayers").value);
+    const loadingOverlay = document.getElementById("loadingOverlay");
+	const numPlayers = parseInt(document.getElementById("numPlayers").value);
     const numCourts = parseInt(document.getElementById("numCourts").value);
     const customPlayers = getCustomPlayerNames(numPlayers);
 
@@ -946,13 +1015,29 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
         return;
     }
 
-    const schedule = generateSchedule(numPlayers, numCourts, customPlayers);
-    if (schedule && schedule.length > 0) {
-        currentSchedule = schedule;
-        displaySchedule(schedule);
-    } else {
-        alert("Could not generate a valid schedule. Please try again.");
-    }
+    // Show loading overlay
+    loadingOverlay.classList.add("active");
+
+
+    // Use setTimeout to allow the loading overlay to render before heavy computation
+    setTimeout(() => {
+        try {
+            const schedule = generateSchedule(numPlayers, numCourts, customPlayers);
+            if (schedule && schedule.length > 0) {
+                currentSchedule = schedule;
+                displaySchedule(schedule);
+            } else {
+                alert("Could not generate a valid schedule. Please try again.");
+            }
+        } catch (error) {
+            alert("An error occurred while generating the schedule.");
+            console.error(error);
+        } finally {
+            // Hide loading overlay
+            loadingOverlay.classList.remove("active");
+        }
+    }, 100);
+
 });
 
 // Add event listener for the new replace names button
