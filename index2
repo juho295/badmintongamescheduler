@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton Game Scheduler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .left-panel, .right-panel {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .left-panel {
+            text-align: center;
+        }
+
+        .right-panel {
+            border-left: 1px solid #ddd;
+            padding-left: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+.input-group {
+            margin: 10px -20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        label {
+            font-weight: bold;
+            text-align: right;
+            margin-right: 10px;
+            width: 200px; /* Fixed width for labels to ensure alignment */
+            flex-shrink: 0; /* Prevent label from shrinking */
+        }
+
+        input {
+            padding: 8px;
+            font-size: 16px;
+            width: 135px; /* Reduced from original 200px */
+            margin: 5px 15px; /* Changed from 5px 10px to remove horizontal margin */
+            text-align: center;
+        }
+
+        #scheduleOutput {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px 5px 5px 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Pop-up styling */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* Changed to viewport height */
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: flex-start; /* Changed from center to flex-start */
+            z-index: 1000;
+            overflow-y: auto; /* Added scroll to main popup */
+            padding: 20px 0; /* Added padding to ensure content doesn't touch edges */
+        }
+
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 90vh; /* Added max-height */
+            overflow-y: auto; /* Added scroll to content */
+            margin: auto; /* Center the content */
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn:hover {
+            color: black;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>Enter Game Details</h1>
+
+            <div class="input-group">
+                <label for="numCourts">Number of Courts:</label>
+                <input type="number" id="numCourts" value="3" min="1" max="4">
+            </div>
+
+            <div class="input-group">
+                <label for="numPlayers">Number of Players:</label>
+                <input type="number" id="numPlayers" value="12" min="4" max="20">
+            </div>
+
+        <div class="input-group">
+            <label for="maxOpponentRepeat">Max Same Opponent (Target):</label>
+            <input type="number" id="maxOpponentRepeat" value="2" min="1" max="9">
+        </div>
+        <div class="input-group">
+            <label for="maxPartnerRepeat">Max Same Partner:</label>
+            <input type="number" id="maxPartnerRepeat" value="1" min="1" max="9">
+        </div>
+
+            <h1>Enter Player Names</h1>
+
+            <div id="playerInputs"></div>
+        </div>
+
+        <div class="right-panel">
+            <h1>Badminton Game Schedule</h1>
+            <button id="generateScheduleBtn">Generate Schedule</button>
+            <button id="downloadScheduleBtn" style="display: none;">Download Schedule</button>
+            <button id="showPopupBtn">Show Pairing Information</button>
+            <div id="scheduleOutput"></div>
+        </div>
+    </div>
+
+    <!-- Pop-up for pairing info -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span class="close-btn" id="closePopupBtn">&times;</span>
+            <h2>Repeated Player Pairing Information</h2>
+
+            <h3>Players Repeated More Than 2 Times Against Same Opponent</h3>
+            <table id="opponentTable">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Opponent</th>
+                        <th>Round(s)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+
+            <h3>Players Repeated More Than 2 Times With Same Partner</h3>
+            <table id="partnerTable">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Partner</th>
+                        <th>Round(s)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+
+const defaultPlayers = [
+    "Player 1", "Player 2", "Player 3", "Player 4", "Player 5",
+    "Player 6", "Player 7", "Player 8", "Player 9", "Player 10",
+    "Player 11", "Player 12", "Player 13", "Player 14", "Player 15", "Player 16",
+    "Player 17", "Player 18", "Player 19", "Player 20"
+];
+
+let currentSchedule = [];
+const MAX_ATTEMPTS = 100;
+const MAX_PAIR_ATTEMPTS = 50;
+
+// Add a mapping to store player ranks
+let playerRankMap = new Map();
+
+function initializePlayerRanks(players) {
+    playerRankMap.clear();
+    players.forEach((player, index) => {
+        playerRankMap.set(player, index + 1);
+    });
+}
+
+function getPlayerRank(player) {
+    // Use cached rank from map
+    if (playerRankMap.has(player)) {
+        return playerRankMap.get(player);
+    }
+
+    // Fallback logic for any edge cases
+    if (player.startsWith('Player ')) {
+        return parseInt(player.replace('Player ', ''));
+    }
+
+    // Default rank if nothing else matches
+    return 1;
+}
+
+
+function calculateTeamStrength(team) {
+    return team.reduce((sum, player) => sum + getPlayerRank(player), 0);
+}
+
+
+function generateSchedule(numPlayers, numCourts, players) {
+    // Initialize player ranks at the start
+    initializePlayerRanks(players);
+
+    const rounds = 9;
+    const playersPerRound = numCourts * 4;
+    const playerStats = {};
+
+    // Initialize player stats and validate feasibility
+    const maxPartnersPerPlayer = Math.min(numPlayers - 1, rounds);
+    const minRequiredPartners = rounds;
+
+    if (maxPartnersPerPlayer < minRequiredPartners) {
+        console.warn("Warning: Not enough players to avoid partner repetition");
+        return null;
+    }
+
+    // Initialize player stats
+    players.forEach(player => {
+        playerStats[player] = {
+            gamesPlayed: 0,
+            partners: new Set() // Track unique partners
+        };
+    });
+
+    let bestSchedule = null;
+    let bestScore = Infinity;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const schedule = [];
+        const pairHistory = new Map();
+        let isValid = true;
+
+        for (let round = 1; round <= rounds; round++) {
+            // Sort players by number of games played
+            const sortedPlayers = [...players].sort((a, b) => {
+                return playerStats[a].gamesPlayed - playerStats[b].gamesPlayed;
+            });
+
+            // Select players for this round (prioritize those who played less)
+            const roundPlayers = sortedPlayers.slice(0, playersPerRound);
+            const waitingPlayers = sortedPlayers.slice(playersPerRound);
+
+            const roundResult = generateRound(roundPlayers, numCourts, pairHistory, round, waitingPlayers);
+
+            if (!roundResult) {
+                isValid = false;
+                break;
+            }
+
+            // Update player stats and partner tracking
+            roundResult.forEach(match => {
+                [...match.team1, ...match.team2].forEach(player => {
+                    playerStats[player].gamesPlayed++;
+                });
+
+                // Track partnerships
+                playerStats[match.team1[0]].partners.add(match.team1[1]);
+                playerStats[match.team1[1]].partners.add(match.team1[0]);
+                playerStats[match.team2[0]].partners.add(match.team2[1]);
+                playerStats[match.team2[1]].partners.add(match.team2[0]);
+            });
+
+            updatePairHistory(roundResult, pairHistory);
+            schedule.push(roundResult);
+        }
+
+        if (isValid) {
+            const score = evaluateSchedule(schedule, pairHistory);
+            if (score < bestScore) {
+                bestScore = score;
+                bestSchedule = schedule;
+            }
+        }
+
+        // Reset player stats for next attempt
+        players.forEach(player => {
+            playerStats[player] = {
+                gamesPlayed: 0,
+                partners: new Set()
+            };
+        });
+    }
+
+    return bestSchedule || [];
+}
+
+
+
+function generateRound(availablePlayers, numCourts, pairHistory, roundNum, waitingPlayers) {
+    let attempts = 0;
+    while (attempts < MAX_PAIR_ATTEMPTS) {
+        const playersForRound = [...availablePlayers];
+        const roundMatches = [];
+        shuffle(playersForRound);
+
+        let success = true;
+        for (let court = 1; court <= numCourts && playersForRound.length >= 4; court++) {
+            const match = findValidMatch(playersForRound, pairHistory);
+            if (!match) {
+                success = false;
+                break;
+            }
+            match.round = roundNum;
+            match.court = court;
+            match.waitingPlayers = waitingPlayers;
+            roundMatches.push(match);
+        }
+
+        if (success && roundMatches.length > 0) {
+            return roundMatches;
+        }
+        attempts++;
+    }
+    return null;
+}
+
+
+function findValidMatch(availablePlayers, pairHistory) {
+    if (availablePlayers.length < 4) return null;
+
+    let bestMatch = null;
+    let bestScore = Infinity;
+
+    for (let i = 0; i < Math.min(10, availablePlayers.length); i++) {
+        for (let j = i + 1; j < Math.min(11, availablePlayers.length); j++) {
+            for (let k = j + 1; k < Math.min(12, availablePlayers.length); k++) {
+                for (let l = k + 1; l < Math.min(13, availablePlayers.length); l++) {
+                    const possibleTeams = [
+                        {
+                            team1: [availablePlayers[i], availablePlayers[l]],
+                            team2: [availablePlayers[j], availablePlayers[k]]
+                        },
+                        {
+                            team1: [availablePlayers[i], availablePlayers[k]],
+                            team2: [availablePlayers[j], availablePlayers[l]]
+                        }
+                    ];
+
+                    possibleTeams.forEach(match => {
+                        const score = evaluateMatch(match.team1, match.team2, pairHistory);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestMatch = match;
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    if (bestMatch) {
+        [...bestMatch.team1, ...bestMatch.team2].forEach(player => {
+            const index = availablePlayers.indexOf(player);
+            if (index > -1) {
+                availablePlayers.splice(index, 1);
+            }
+        });
+    }
+
+    return bestMatch;
+}
+
+
+function evaluateMatch(team1, team2, pairHistory) {
+    let score = 0;
+
+    // Get current thresholds from inputs
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+
+    // Calculate team strengths based on player ranks
+    const team1Strength = calculateTeamStrength(team1);
+    const team2Strength = calculateTeamStrength(team2);
+
+    // Check if any players have exceeded partnership threshold
+    const team1PartnerCount = getPartnerHistory(team1[0], team1[1], pairHistory);
+    const team2PartnerCount = getPartnerHistory(team2[0], team2[1], pairHistory);
+
+    if (team1PartnerCount >= maxPartnerRepeat || team2PartnerCount >= maxPartnerRepeat) {
+        return Infinity;
+    }
+
+    // Calculate the maximum rank difference within each team
+    const team1RankDiff = Math.abs(getPlayerRank(team1[0]) - getPlayerRank(team1[1]));
+    const team2RankDiff = Math.abs(getPlayerRank(team2[0]) - getPlayerRank(team2[1]));
+
+    // Calculate the average rank for each team
+    const team1AvgRank = (getPlayerRank(team1[0]) + getPlayerRank(team1[1])) / 2;
+    const team2AvgRank = (getPlayerRank(team2[0]) + getPlayerRank(team2[1])) / 2;
+
+    // Heavily penalize large rank differences between teams
+    const avgRankDiff = Math.abs(team1AvgRank - team2AvgRank);
+    if (avgRankDiff > 5) {  // If average rank difference is more than 5
+        score += avgRankDiff * 200;  // Significant penalty
+    }
+
+    // Penalize having two high-ranked players (ranks 1-4) on the same team
+    const highRankedPlayers1 = team1.filter(p => getPlayerRank(p) <= 4).length;
+    const highRankedPlayers2 = team2.filter(p => getPlayerRank(p) <= 4).length;
+    if (highRankedPlayers1 === 2 || highRankedPlayers2 === 2) {
+        score += 500;  // Heavy penalty for two high-ranked players on same team
+    }
+
+    // Penalize pairing very high-ranked with very low-ranked players
+    team1.forEach(player => {
+        if (getPlayerRank(player) <= 4) {  // For high-ranked players
+            const partner = team1.find(p => p !== player);
+            if (getPlayerRank(partner) > 12) {  // If paired with very low-ranked player
+                score += 300;
+            }
+        }
+    });
+    team2.forEach(player => {
+        if (getPlayerRank(player) <= 4) {
+            const partner = team2.find(p => p !== player);
+            if (getPlayerRank(partner) > 12) {
+                score += 300;
+            }
+        }
+    });
+
+    // Penalize very unbalanced total team strengths
+    const strengthDifference = Math.abs(team1Strength - team2Strength);
+    if (strengthDifference > 10) {  // If difference is too large
+        score += strengthDifference * 100;
+    }
+
+    // Consider opponent history
+    for (const player1 of team1) {
+        for (const player2 of team2) {
+            score += getOpponentHistory(player1, player2, pairHistory) * 15;
+        }
+    }
+
+    return score;
+}
+
+
+
+function getPartnerHistory(player1, player2, pairHistory) {
+    const key = [player1, player2].sort().join('-');
+    return pairHistory.get(key)?.partner || 0;
+}
+
+function getOpponentHistory(player1, player2, pairHistory) {
+    const key = [player1, player2].sort().join('-');
+    return pairHistory.get(key)?.opponent || 0;
+}
+
+function updatePairHistory(roundMatches, pairHistory) {
+    roundMatches.forEach(match => {
+        // Update partner history
+        updatePairCount(match.team1[0], match.team1[1], pairHistory, 'partner');
+        updatePairCount(match.team2[0], match.team2[1], pairHistory, 'partner');
+
+        // Update opponent history
+        for (const player1 of match.team1) {
+            for (const player2 of match.team2) {
+                updatePairCount(player1, player2, pairHistory, 'opponent');
+            }
+        }
+    });
+}
+
+function updatePairCount(player1, player2, pairHistory, type) {
+    const key = [player1, player2].sort().join('-');
+    if (!pairHistory.has(key)) {
+        pairHistory.set(key, { partner: 0, opponent: 0 });
+    }
+    const count = pairHistory.get(key);
+    count[type]++;
+}
+
+function evaluateSchedule(schedule, pairHistory) {
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
+
+    let score = 0;
+    pairHistory.forEach((count) => {
+        if (count.partner > maxPartnerRepeat) {
+            score += Math.pow(count.partner - maxPartnerRepeat, 3) * 1000;
+        }
+        if (count.opponent > maxOpponentRepeat) {
+            score += Math.pow(count.opponent - maxOpponentRepeat, 2) * 80;
+        }
+    });
+    return score;
+}
+
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+
+
+
+function displaySchedule(schedule) {
+    const scheduleOutput = document.getElementById("scheduleOutput");
+    scheduleOutput.innerHTML = "";
+
+    let scheduleText = "Badminton Game Schedule\n\n";
+
+    schedule.forEach(round => {
+        const roundTitle = document.createElement("h3");
+        roundTitle.textContent = `Round ${round[0].round}`;
+        scheduleOutput.appendChild(roundTitle);
+        scheduleText += `Round ${round[0].round}\n`;
+
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.gap = "20px";
+        container.style.marginBottom = "20px";
+
+        // Games table
+        const roundTableDiv = document.createElement("div");
+        roundTableDiv.style.flex = "1";
+        const roundTable = document.createElement("table");
+        const roundHeader = document.createElement("tr");
+        roundHeader.innerHTML = `<th>Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
+        roundTable.appendChild(roundHeader);
+
+        round.forEach(match => {
+            const matchRow = document.createElement("tr");
+            matchRow.innerHTML = `
+                <td>${match.court}</td>
+                <td class="team1">${match.team1.join(" & ")}</td>
+                <td class="team2">${match.team2.join(" & ")}</td>
+            `;
+            roundTable.appendChild(matchRow);
+        });
+        roundTableDiv.appendChild(roundTable);
+
+        // Waiting players table
+        if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+            const waitingTableDiv = document.createElement("div");
+            waitingTableDiv.style.minWidth = "200px";
+            const waitingTable = document.createElement("table");
+            const waitingHeader = document.createElement("tr");
+            waitingHeader.innerHTML = `<th>Waiting Players</th>`;
+            waitingTable.appendChild(waitingHeader);
+
+            round[0].waitingPlayers.forEach(player => {
+                const playerRow = document.createElement("tr");
+                playerRow.innerHTML = `<td>${player}</td>`;
+                waitingTable.appendChild(playerRow);
+            });
+            waitingTableDiv.appendChild(waitingTable);
+            container.appendChild(roundTableDiv);
+            container.appendChild(waitingTableDiv);
+        } else {
+            container.appendChild(roundTableDiv);
+        }
+
+        scheduleOutput.appendChild(container);
+    });
+
+    // Add download button
+    const downloadBtn = document.getElementById("downloadScheduleBtn");
+    downloadBtn.style.display = "inline-block";
+
+    // Update download functionality to include waiting players
+    downloadBtn.onclick = function() {
+        let downloadText = "Badminton Game Schedule\n\n";
+        schedule.forEach(round => {
+            downloadText += `Round ${round[0].round}\n`;
+            downloadText += "Courts:\n";
+            round.forEach(match => {
+                downloadText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
+            });
+            if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+                downloadText += "\nWaiting Players:\n";
+                round[0].waitingPlayers.forEach(player => {
+                    downloadText += `${player}\n`;
+                });
+            }
+            downloadText += "\n";
+        });
+
+        const blob = new Blob([downloadText], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "badminton_schedule.txt";
+        link.click();
+    };
+}
+
+
+
+function getPlayerPairingInfo(schedule) {
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
+
+    let playerOpponentCount = {};
+    let playerPartnerCount = {};
+    let opponentInstances = new Set();
+    let partnerInstances = new Set();
+
+    schedule.forEach(round => {
+        round.forEach(match => {
+            [match.team1, match.team2].forEach(team => {
+                team.forEach(player => {
+                    if (!playerOpponentCount[player]) playerOpponentCount[player] = {};
+                    if (!playerPartnerCount[player]) playerPartnerCount[player] = {};
+
+                    // Count opponents
+                    const opponents = team === match.team1 ? match.team2 : match.team1;
+                    opponents.forEach(opponent => {
+                        playerOpponentCount[player][opponent] = (playerOpponentCount[player][opponent] || 0) + 1;
+                    });
+
+                    // Count partners
+                    team.forEach(partner => {
+                        if (partner !== player) {
+                            playerPartnerCount[player][partner] = (playerPartnerCount[player][partner] || 0) + 1;
+                        }
+                    });
+                });
+            });
+        });
+    });
+
+    // Find instances exceeding thresholds
+    for (let player in playerOpponentCount) {
+        for (let opponent in playerOpponentCount[player]) {
+            if (playerOpponentCount[player][opponent] > maxOpponentRepeat) {
+                const pair = [player, opponent].sort().join('-');
+                opponentInstances.add(pair);
+            }
+        }
+    }
+
+    for (let player in playerPartnerCount) {
+        for (let partner in playerPartnerCount[player]) {
+            if (playerPartnerCount[player][partner] > maxPartnerRepeat - 1) {
+                const pair = [player, partner].sort().join('-');
+                partnerInstances.add(pair);
+            }
+        }
+    }
+
+    const formattedOpponents = Array.from(opponentInstances).map(pair => {
+        const [player1, player2] = pair.split('-');
+        return { player: player1, opponent: player2 };
+    });
+
+    const formattedPartners = Array.from(partnerInstances).map(pair => {
+        const [player1, player2] = pair.split('-');
+        return { player: player1, partner: player2 };
+    });
+
+    return {
+        opponentInstances: formattedOpponents,
+        partnerInstances: formattedPartners,
+        thresholds: {
+            opponent: maxOpponentRepeat,
+            partner: maxPartnerRepeat
+        }
+    };
+}
+
+
+function getPlayerRankForSort(playerName) {
+    return parseInt(playerName.replace('Player ', ''));
+}
+
+function displayPairingInfo(pairingInfo) {
+    // Update the threshold displays in the headers
+    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
+    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner - 1;
+
+    const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
+    const partnerTableBody = document.getElementById("partnerTable").getElementsByTagName('tbody')[0];
+
+    opponentTableBody.innerHTML = "";
+    partnerTableBody.innerHTML = "";
+
+    // Sort and display instances as before
+    const sortedOpponents = [...pairingInfo.opponentInstances].sort((a, b) => {
+        return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
+    });
+
+    const sortedPartners = [...pairingInfo.partnerInstances].sort((a, b) => {
+        return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
+    });
+
+    sortedOpponents.forEach(pair => {
+        const row = opponentTableBody.insertRow();
+        row.insertCell(0).textContent = pair.player;
+        row.insertCell(1).textContent = pair.opponent;
+        row.insertCell(2).textContent = getRoundsForOpponent(pair.player, pair.opponent);
+    });
+
+    sortedPartners.forEach(pair => {
+        const row = partnerTableBody.insertRow();
+        row.insertCell(0).textContent = pair.player;
+        row.insertCell(1).textContent = pair.partner;
+        row.insertCell(2).textContent = getRoundsForPartner(pair.player, pair.partner);
+    });
+}
+
+
+function getRoundsForOpponent(player, opponent) {
+    let rounds = [];
+    currentSchedule.forEach(round => {
+        round.forEach(match => {
+            if (match.team1.includes(player) && match.team2.includes(opponent)) {
+                rounds.push(match.round);
+            }
+            if (match.team2.includes(player) && match.team1.includes(opponent)) {
+                rounds.push(match.round);
+            }
+        });
+    });
+    return rounds.join(", ");
+}
+
+function getRoundsForPartner(player, partner) {
+    let rounds = [];
+    currentSchedule.forEach(round => {
+        round.forEach(match => {
+            if (match.team1.includes(player) && match.team1.includes(partner)) {
+                rounds.push(match.round);
+            }
+            if (match.team2.includes(player) && match.team2.includes(partner)) {
+                rounds.push(match.round);
+            }
+        });
+    });
+    return rounds.join(", ");
+}
+
+function getCustomPlayerNames(numPlayers) {
+    const customPlayers = [];
+    for (let i = 0; i < numPlayers; i++) {
+        const input = document.getElementById(`player${i + 1}`);
+        const playerName = input?.value?.trim();
+        // Only add non-empty player names
+        if (playerName) {
+            customPlayers.push(playerName);
+        } else {
+            customPlayers.push(defaultPlayers[i]);
+        }
+    }
+    return customPlayers;
+}
+
+
+function generatePlayerInputs(numPlayers) {
+    const playerInputsContainer = document.getElementById("playerInputs");
+    // Store existing values before clearing
+    const existingValues = {};
+    const currentInputs = playerInputsContainer.querySelectorAll('input');
+    currentInputs.forEach(input => {
+        existingValues[input.id] = input.value;
+    });
+
+    playerInputsContainer.innerHTML = "";
+
+    for (let i = 0; i < numPlayers; i++) {
+        const playerInputGroup = document.createElement("div");
+        playerInputGroup.className = "input-group";
+        const inputId = `player${i + 1}`;
+
+        // Use existing value if available, otherwise use default
+        const value = existingValues[inputId] || defaultPlayers[i];
+
+        playerInputGroup.innerHTML = `
+            <label for="${inputId}">Player ${i + 1}:</label>
+            <input type="text" id="${inputId}" value="${value}" />
+        `;
+        playerInputsContainer.appendChild(playerInputGroup);
+    }
+}
+
+
+// Event Listeners
+document.getElementById("generateScheduleBtn").addEventListener("click", () => {
+    const numPlayers = parseInt(document.getElementById("numPlayers").value);
+    const numCourts = parseInt(document.getElementById("numCourts").value);
+    const customPlayers = getCustomPlayerNames(numPlayers);
+
+    // Validate we have enough players
+    if (customPlayers.length < 4) {
+        alert("Need at least 4 players to generate a schedule");
+        return;
+    }
+
+    const schedule = generateSchedule(numPlayers, numCourts, customPlayers);
+    if (schedule && schedule.length > 0) {
+        currentSchedule = schedule;
+        displaySchedule(schedule);
+    } else {
+        alert("Could not generate a valid schedule. Please try again.");
+    }
+});
+
+
+// Update the popup HTML to have dynamic headers
+document.querySelector('.popup-content').innerHTML = `
+    <span class="close-btn" id="closePopupBtn">&times;</span>
+    <h2>Repeated Player Pairing Information</h2>
+
+    <h3 id="opponentTableHeader">Players Repeated More Than <span class="opponent-threshold">2</span> Times Against Same Opponent</h3>
+    <table id="opponentTable">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Opponent</th>
+                <th>Round(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <h3 id="partnerTableHeader">Players Repeated More Than <span class="partner-threshold">1</span> Times With Same Partner</h3>
+    <table id="partnerTable">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Partner</th>
+                <th>Round(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+`;
+
+document.getElementById("showPopupBtn").addEventListener("click", () => {
+    const playerPairingInfo = getPlayerPairingInfo(currentSchedule);
+    displayPairingInfo(playerPairingInfo);
+    document.getElementById("popup").style.display = "flex";
+});
+
+document.getElementById("closePopupBtn").addEventListener("click", () => {
+    document.getElementById("popup").style.display = "none";
+});
+
+
+// Update the numPlayers change handler
+document.getElementById("numPlayers").addEventListener("change", (e) => {
+    const newNum = parseInt(e.target.value);
+    if (newNum >= 4 && newNum <= 20) {
+        generatePlayerInputs(newNum);
+    } else {
+        alert("Please enter a number between 4 and 20 players");
+        e.target.value = 12; // Reset to default
+        generatePlayerInputs(12);
+    }
+});
+
+// Initialize player inputs
+generatePlayerInputs(parseInt(document.getElementById("numPlayers").value));
+    </script>
+
+
+
+
+</body>
+</html>
