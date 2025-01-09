@@ -462,6 +462,12 @@ function evaluateMatch(team1, team2, pairHistory) {
     let score = 0;
     const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
 
+    // Immediately reject any team that pairs Player 1 with Player 2
+    if ((team1.includes('Player 1') && team1.includes('Player 2')) ||
+        (team2.includes('Player 1') && team2.includes('Player 2'))) {
+        return Infinity;
+    }
+
     // Calculate team strengths based on player ranks
     const team1Strength = calculateTeamStrength(team1);
     const team2Strength = calculateTeamStrength(team2);
@@ -482,7 +488,7 @@ function evaluateMatch(team1, team2, pairHistory) {
     const bestRankDiff = Math.abs(team1Ranks[0] - team2Ranks[0]);
     const worstRankDiff = Math.abs(team1Ranks[1] - team2Ranks[1]);
     if (bestRankDiff > 4 || worstRankDiff > 4) {
-        return Infinity; // Completely reject these matches
+        return Infinity;
     }
 
     // Extremely high penalty for any team having both top (1-4) and bottom (9+) players
@@ -492,7 +498,7 @@ function evaluateMatch(team1, team2, pairHistory) {
             const partner = team1.find(p => p !== player);
             const partnerRank = getPlayerRank(partner);
             if (partnerRank >= 9) {
-                score += 2000; // Increased penalty
+                score += 2000;
             }
         }
     });
@@ -502,7 +508,7 @@ function evaluateMatch(team1, team2, pairHistory) {
             const partner = team2.find(p => p !== player);
             const partnerRank = getPlayerRank(partner);
             if (partnerRank >= 9) {
-                score += 2000; // Increased penalty
+                score += 2000;
             }
         }
     });
@@ -551,8 +557,6 @@ function evaluateMatch(team1, team2, pairHistory) {
 
     return score;
 }
-
-
 
 
 
