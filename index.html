@@ -536,6 +536,12 @@ function evaluateMatch(team1, team2, pairHistory) {
         return Infinity;
     }
 
+    // Immediately reject any team that pairs Player 11 with Player 12
+    if ((team1.includes('Player 11') && team1.includes('Player 12')) ||
+        (team2.includes('Player 11') && team2.includes('Player 12'))) {
+        return Infinity;
+    }
+
     // Calculate team strengths based on player ranks
     const team1Strength = calculateTeamStrength(team1);
     const team2Strength = calculateTeamStrength(team2);
