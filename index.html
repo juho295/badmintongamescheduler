@@ -140,13 +140,13 @@
         }
 
 
-        
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="left-panel">
-            <h1>Enter Player Names</h1>
+            <h1>Enter Game Details</h1>
 
             <div class="input-group">
                 <label for="numCourts">Number of Courts:</label>
@@ -157,6 +157,17 @@
                 <label for="numPlayers">Number of Players:</label>
                 <input type="number" id="numPlayers" value="12" min="4" max="20">
             </div>
+
+        <div class="input-group">
+            <label for="maxOpponentRepeat">Max Same Opponent (Target):</label>
+            <input type="number" id="maxOpponentRepeat" value="2" min="1" max="9">
+        </div>
+        <div class="input-group">
+            <label for="maxPartnerRepeat">Max Same Partner:</label>
+            <input type="number" id="maxPartnerRepeat" value="1" min="1" max="9">
+        </div>
+
+            <h1>Enter Player Names</h1>
 
             <div id="playerInputs"></div>
         </div>
@@ -176,7 +187,6 @@
             <span class="close-btn" id="closePopupBtn">&times;</span>
             <h2>Repeated Player Pairing Information</h2>
 
-            <!-- Section for Players Repeated More Than 3 Times Against Same Opponent -->
             <h3>Players Repeated More Than 2 Times Against Same Opponent</h3>
             <table id="opponentTable">
                 <thead>
@@ -191,7 +201,6 @@
                 </tbody>
             </table>
 
-            <!-- Section for Players Repeated More Than 1 Time(s) With Same Partner -->
             <h3>Players Repeated More Than 2 Times With Same Partner</h3>
             <table id="partnerTable">
                 <thead>
@@ -221,19 +230,29 @@ let currentSchedule = [];
 const MAX_ATTEMPTS = 100;
 const MAX_PAIR_ATTEMPTS = 50;
 
+// Add a mapping to store player ranks
+let playerRankMap = new Map();
+
+function initializePlayerRanks(players) {
+    playerRankMap.clear();
+    players.forEach((player, index) => {
+        playerRankMap.set(player, index + 1);
+    });
+}
+
 function getPlayerRank(player) {
-    // If it's a default player, get their rank number
+    // Use cached rank from map
+    if (playerRankMap.has(player)) {
+        return playerRankMap.get(player);
+    }
+
+    // Fallback logic for any edge cases
     if (player.startsWith('Player ')) {
         return parseInt(player.replace('Player ', ''));
     }
-    // For custom names, assign them the same rank as their input position
-    const inputs = document.querySelectorAll('[id^="player"]');
-    for (let i = 0; i < inputs.length; i++) {
-        if (inputs[i].value === player) {
-            return i + 1;
-        }
-    }
-    return 1; // fallback rank
+
+    // Default rank if nothing else matches
+    return 1;
 }
 
 
@@ -242,15 +261,29 @@ function calculateTeamStrength(team) {
 }
 
 
-
 function generateSchedule(numPlayers, numCourts, players) {
+    // Initialize player ranks at the start
+    initializePlayerRanks(players);
+
     const rounds = 9;
     const playersPerRound = numCourts * 4;
     const playerStats = {};
-    
+
+    // Initialize player stats and validate feasibility
+    const maxPartnersPerPlayer = Math.min(numPlayers - 1, rounds);
+    const minRequiredPartners = rounds;
+
+    if (maxPartnersPerPlayer < minRequiredPartners) {
+        console.warn("Warning: Not enough players to avoid partner repetition");
+        return null;
+    }
+
     // Initialize player stats
     players.forEach(player => {
-        playerStats[player] = 0; // Count of games played
+        playerStats[player] = {
+            gamesPlayed: 0,
+            partners: new Set() // Track unique partners
+        };
     });
 
     let bestSchedule = null;
@@ -264,7 +297,7 @@ function generateSchedule(numPlayers, numCourts, players) {
         for (let round = 1; round <= rounds; round++) {
             // Sort players by number of games played
             const sortedPlayers = [...players].sort((a, b) => {
-                return playerStats[a] - playerStats[b];
+                return playerStats[a].gamesPlayed - playerStats[b].gamesPlayed;
             });
 
             // Select players for this round (prioritize those who played less)
@@ -278,9 +311,17 @@ function generateSchedule(numPlayers, numCourts, players) {
                 break;
             }
 
-            // Update player stats
-            roundPlayers.forEach(player => {
-                playerStats[player]++;
+            // Update player stats and partner tracking
+            roundResult.forEach(match => {
+                [...match.team1, ...match.team2].forEach(player => {
+                    playerStats[player].gamesPlayed++;
+                });
+
+                // Track partnerships
+                playerStats[match.team1[0]].partners.add(match.team1[1]);
+                playerStats[match.team1[1]].partners.add(match.team1[0]);
+                playerStats[match.team2[0]].partners.add(match.team2[1]);
+                playerStats[match.team2[1]].partners.add(match.team2[0]);
             });
 
             updatePairHistory(roundResult, pairHistory);
@@ -294,10 +335,19 @@ function generateSchedule(numPlayers, numCourts, players) {
                 bestSchedule = schedule;
             }
         }
+
+        // Reset player stats for next attempt
+        players.forEach(player => {
+            playerStats[player] = {
+                gamesPlayed: 0,
+                partners: new Set()
+            };
+        });
     }
 
     return bestSchedule || [];
 }
+
 
 
 function generateRound(availablePlayers, numCourts, pairHistory, roundNum, waitingPlayers) {
@@ -376,37 +426,46 @@ function findValidMatch(availablePlayers, pairHistory) {
 
 function evaluateMatch(team1, team2, pairHistory) {
     let score = 0;
-    
+
+    // Get current thresholds from inputs
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+
     // Calculate team strengths
     const team1Strength = calculateTeamStrength(team1);
     const team2Strength = calculateTeamStrength(team2);
-    
+
+    // Check if any players have exceeded partnership threshold
+    const team1PartnerCount = getPartnerHistory(team1[0], team1[1], pairHistory);
+    const team2PartnerCount = getPartnerHistory(team2[0], team2[1], pairHistory);
+
+    if (team1PartnerCount >= maxPartnerRepeat || team2PartnerCount >= maxPartnerRepeat) {
+        return Infinity;
+    }
+
     // Heavily penalize unbalanced matches
     const strengthDifference = Math.abs(team1Strength - team2Strength);
     score += strengthDifference * 20;
-    
+
     // Penalize pairing very high-skilled players together
     const team1SkillGap = Math.abs(getPlayerRank(team1[0]) - getPlayerRank(team1[1]));
     const team2SkillGap = Math.abs(getPlayerRank(team2[0]) - getPlayerRank(team2[1]));
-    
+
     // Encourage pairing high-skilled with lower-skilled players
     if (team1SkillGap < 3 || team2SkillGap < 3) {
         score += 50;
     }
-    
-    // Consider partner history
-    score += getPartnerHistory(team1[0], team1[1], pairHistory) * 10;
-    score += getPartnerHistory(team2[0], team2[1], pairHistory) * 10;
-    
+
     // Consider opponent history
     for (const player1 of team1) {
         for (const player2 of team2) {
-            score += getOpponentHistory(player1, player2, pairHistory) * 8;
+            score += getOpponentHistory(player1, player2, pairHistory) * 15;
         }
     }
-    
+
     return score;
 }
+
+
 
 function getPartnerHistory(player1, player2, pairHistory) {
     const key = [player1, player2].sort().join('-');
@@ -443,13 +502,21 @@ function updatePairCount(player1, player2, pairHistory, type) {
 }
 
 function evaluateSchedule(schedule, pairHistory) {
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
+
     let score = 0;
     pairHistory.forEach((count) => {
-        if (count.partner > 2) score += Math.pow(count.partner - 2, 2) * 100;
-        if (count.opponent > 3) score += Math.pow(count.opponent - 3, 2) * 80;
+        if (count.partner > maxPartnerRepeat) {
+            score += Math.pow(count.partner - maxPartnerRepeat, 3) * 1000;
+        }
+        if (count.opponent > maxOpponentRepeat) {
+            score += Math.pow(count.opponent - maxOpponentRepeat, 2) * 80;
+        }
     });
     return score;
 }
+
 
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -554,10 +621,13 @@ function displaySchedule(schedule) {
 
 
 function getPlayerPairingInfo(schedule) {
+    const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
+
     let playerOpponentCount = {};
     let playerPartnerCount = {};
-    let opponentInstances = new Set(); // Changed to Set to handle unique pairs
-    let partnerInstances = new Set(); // Changed to Set to handle unique pairs
+    let opponentInstances = new Set();
+    let partnerInstances = new Set();
 
     schedule.forEach(round => {
         round.forEach(match => {
@@ -583,29 +653,25 @@ function getPlayerPairingInfo(schedule) {
         });
     });
 
-    // Find instances of players with same opponents more than 2 times
+    // Find instances exceeding thresholds
     for (let player in playerOpponentCount) {
         for (let opponent in playerOpponentCount[player]) {
-            if (playerOpponentCount[player][opponent] > 2) {
-                // Create a sorted pair to ensure uniqueness
+            if (playerOpponentCount[player][opponent] > maxOpponentRepeat) {
                 const pair = [player, opponent].sort().join('-');
                 opponentInstances.add(pair);
             }
         }
     }
 
-    // Find instances of players with same partners more than 1 times
     for (let player in playerPartnerCount) {
         for (let partner in playerPartnerCount[player]) {
-            if (playerPartnerCount[player][partner] > 1) {
-                // Create a sorted pair to ensure uniqueness
+            if (playerPartnerCount[player][partner] > maxPartnerRepeat - 1) {
                 const pair = [player, partner].sort().join('-');
                 partnerInstances.add(pair);
             }
         }
     }
 
-    // Convert Sets of pairs back to a format suitable for display
     const formattedOpponents = Array.from(opponentInstances).map(pair => {
         const [player1, player2] = pair.split('-');
         return { player: player1, opponent: player2 };
@@ -616,12 +682,15 @@ function getPlayerPairingInfo(schedule) {
         return { player: player1, partner: player2 };
     });
 
-    return { 
+    return {
         opponentInstances: formattedOpponents,
-        partnerInstances: formattedPartners 
+        partnerInstances: formattedPartners,
+        thresholds: {
+            opponent: maxOpponentRepeat,
+            partner: maxPartnerRepeat
+        }
     };
 }
-
 
 
 function getPlayerRankForSort(playerName) {
@@ -629,24 +698,25 @@ function getPlayerRankForSort(playerName) {
 }
 
 function displayPairingInfo(pairingInfo) {
+    // Update the threshold displays in the headers
+    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
+    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner - 1;
+
     const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
     const partnerTableBody = document.getElementById("partnerTable").getElementsByTagName('tbody')[0];
 
     opponentTableBody.innerHTML = "";
     partnerTableBody.innerHTML = "";
 
-    // Sort opponent instances by player rank (ascending)
+    // Sort and display instances as before
     const sortedOpponents = [...pairingInfo.opponentInstances].sort((a, b) => {
         return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
     });
 
-    // Sort partner instances by player rank (ascending)
     const sortedPartners = [...pairingInfo.partnerInstances].sort((a, b) => {
         return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
     });
 
-
-    // Display sorted opponent instances with round numbers
     sortedOpponents.forEach(pair => {
         const row = opponentTableBody.insertRow();
         row.insertCell(0).textContent = pair.player;
@@ -654,7 +724,6 @@ function displayPairingInfo(pairingInfo) {
         row.insertCell(2).textContent = getRoundsForOpponent(pair.player, pair.opponent);
     });
 
-    // Display sorted partner instances with round numbers
     sortedPartners.forEach(pair => {
         const row = partnerTableBody.insertRow();
         row.insertCell(0).textContent = pair.player;
@@ -718,17 +787,17 @@ function generatePlayerInputs(numPlayers) {
     currentInputs.forEach(input => {
         existingValues[input.id] = input.value;
     });
-    
+
     playerInputsContainer.innerHTML = "";
 
     for (let i = 0; i < numPlayers; i++) {
         const playerInputGroup = document.createElement("div");
         playerInputGroup.className = "input-group";
         const inputId = `player${i + 1}`;
-        
+
         // Use existing value if available, otherwise use default
         const value = existingValues[inputId] || defaultPlayers[i];
-        
+
         playerInputGroup.innerHTML = `
             <label for="${inputId}">Player ${i + 1}:</label>
             <input type="text" id="${inputId}" value="${value}" />
@@ -743,13 +812,13 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
     const numPlayers = parseInt(document.getElementById("numPlayers").value);
     const numCourts = parseInt(document.getElementById("numCourts").value);
     const customPlayers = getCustomPlayerNames(numPlayers);
-    
+
     // Validate we have enough players
     if (customPlayers.length < 4) {
         alert("Need at least 4 players to generate a schedule");
         return;
     }
-    
+
     const schedule = generateSchedule(numPlayers, numCourts, customPlayers);
     if (schedule && schedule.length > 0) {
         currentSchedule = schedule;
@@ -758,6 +827,39 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
         alert("Could not generate a valid schedule. Please try again.");
     }
 });
+
+
+// Update the popup HTML to have dynamic headers
+document.querySelector('.popup-content').innerHTML = `
+    <span class="close-btn" id="closePopupBtn">&times;</span>
+    <h2>Repeated Player Pairing Information</h2>
+
+    <h3 id="opponentTableHeader">Players Repeated More Than <span class="opponent-threshold">2</span> Times Against Same Opponent</h3>
+    <table id="opponentTable">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Opponent</th>
+                <th>Round(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <h3 id="partnerTableHeader">Players Repeated More Than <span class="partner-threshold">1</span> Times With Same Partner</h3>
+    <table id="partnerTable">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Partner</th>
+                <th>Round(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+`;
 
 document.getElementById("showPopupBtn").addEventListener("click", () => {
     const playerPairingInfo = getPlayerPairingInfo(currentSchedule);
@@ -768,6 +870,7 @@ document.getElementById("showPopupBtn").addEventListener("click", () => {
 document.getElementById("closePopupBtn").addEventListener("click", () => {
     document.getElementById("popup").style.display = "none";
 });
+
 
 // Update the numPlayers change handler
 document.getElementById("numPlayers").addEventListener("change", (e) => {
