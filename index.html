@@ -264,7 +264,7 @@
 
             <div class="input-group">
                 <label for="numPlayers">Number of Players:</label>
-                <input type="number" id="numPlayers" value="12" min="10" max="20">
+                <input type="number" id="numPlayers" value="12" min="8" max="20">
             </div>
 
         <div class="input-group">
@@ -370,7 +370,8 @@ function calculateTeamStrength(team) {
 }
 
 
-function generateSchedule(numPlayers, numCourts, players) {
+
+function originalGenerateSchedule(numPlayers, numCourts, players) {
     // Initialize player ranks at the start
     initializePlayerRanks(players);
 
@@ -457,6 +458,191 @@ function generateSchedule(numPlayers, numCourts, players) {
     return bestSchedule || [];
 }
 
+
+
+
+
+
+function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
+    const rounds = 9;
+    const schedule = [];
+    const pairHistory = new Map();
+    const playerGamesCount = {};
+    
+    // Initialize game count for each player
+    players.forEach(player => {
+        playerGamesCount[player] = 0;
+    });
+
+    function updatePlayerGamesCount(match) {
+        [...match.team1, ...match.team2].forEach(player => {
+            playerGamesCount[player]++;
+        });
+    }
+
+    function selectWaitingPlayers(allPlayers, usedPlayers) {
+        const waitingPlayers = allPlayers.filter(p => !usedPlayers.includes(p))
+            .sort((a, b) => playerGamesCount[a] - playerGamesCount[b]);
+        return waitingPlayers;
+    }
+
+    function findBestMatch(availablePlayers, roundNum) {
+        const matches = [];
+        let usedPlayers = [];
+        
+        // Sort players by number of games played
+        let remainingPlayers = [...availablePlayers].sort((a, b) => {
+            const gamesDiff = playerGamesCount[a] - playerGamesCount[b];
+            return gamesDiff !== 0 ? gamesDiff : Math.random() - 0.5;
+        });
+
+        while (remainingPlayers.length >= 4 && matches.length < numCourts) {
+            let bestMatch = null;
+            let bestScore = Infinity;
+            let selectedPlayers = remainingPlayers.slice(0, Math.min(8, remainingPlayers.length));
+
+            // Try different combinations prioritizing players with fewer games
+            for (let i = 0; i < selectedPlayers.length - 3; i++) {
+                for (let j = i + 1; j < selectedPlayers.length - 2; j++) {
+                    for (let k = j + 1; k < selectedPlayers.length - 1; k++) {
+                        for (let l = k + 1; l < selectedPlayers.length; l++) {
+                            const players = [
+                                selectedPlayers[i],
+                                selectedPlayers[j],
+                                selectedPlayers[k],
+                                selectedPlayers[l]
+                            ];
+
+                            // Calculate base score based on total games played by these players
+                            const totalGamesPlayed = players.reduce((sum, p) => sum + playerGamesCount[p], 0);
+
+                            const combinations = [
+                                {
+                                    team1: [players[0], players[1]],
+                                    team2: [players[2], players[3]]
+                                },
+                                {
+                                    team1: [players[0], players[2]],
+                                    team2: [players[1], players[3]]
+                                },
+                                {
+                                    team1: [players[0], players[3]],
+                                    team2: [players[1], players[2]]
+                                }
+                            ];
+
+                            combinations.forEach(combo => {
+                                let score = totalGamesPlayed * 10; // Base score from games played
+                                
+                                // Add partner/opponent history penalties
+                                score += getPairScore(combo.team1[0], combo.team1[1], true) * 20;
+                                score += getPairScore(combo.team2[0], combo.team2[1], true) * 20;
+                                
+                                combo.team1.forEach(p1 => {
+                                    combo.team2.forEach(p2 => {
+                                        score += getPairScore(p1, p2, false) * 10;
+                                    });
+                                });
+
+                                // Add small random factor to break ties
+                                score += Math.random();
+
+                                if (score < bestScore) {
+                                    bestScore = score;
+                                    bestMatch = combo;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (bestMatch) {
+                updatePairHistory(bestMatch.team1, bestMatch.team2);
+                const match = {
+                    round: roundNum,
+                    court: matches.length + 1,
+                    team1: bestMatch.team1,
+                    team2: bestMatch.team2
+                };
+                
+                // Update games count for players in this match
+                updatePlayerGamesCount(match);
+                matches.push(match);
+                
+                // Update used players
+                usedPlayers = [...usedPlayers, ...bestMatch.team1, ...bestMatch.team2];
+                
+                // Remove used players from remaining players
+                remainingPlayers = remainingPlayers.filter(p => !usedPlayers.includes(p));
+            } else {
+                break;
+            }
+        }
+
+        // Add waiting players to all matches in the round
+        if (matches.length > 0) {
+            const waitingPlayers = selectWaitingPlayers(availablePlayers, usedPlayers);
+            matches.forEach(match => {
+                match.waitingPlayers = [...waitingPlayers];
+            });
+        }
+
+        return matches;
+    }
+
+    function getPairScore(player1, player2, asPartners) {
+        const key = [player1, player2].sort().join('-');
+        const history = pairHistory.get(key) || { partner: 0, opponent: 0 };
+        return asPartners ? history.partner : history.opponent;
+    }
+
+    function updatePairHistory(team1, team2) {
+        function updatePair(p1, p2, type) {
+            const key = [p1, p2].sort().join('-');
+            if (!pairHistory.has(key)) {
+                pairHistory.set(key, { partner: 0, opponent: 0 });
+            }
+            pairHistory.get(key)[type]++;
+        }
+
+        team1.forEach((p1, i) => {
+            team1.forEach((p2, j) => {
+                if (i < j) updatePair(p1, p2, 'partner');
+            });
+        });
+        team2.forEach((p1, i) => {
+            team2.forEach((p2, j) => {
+                if (i < j) updatePair(p1, p2, 'partner');
+            });
+        });
+
+        team1.forEach(p1 => {
+            team2.forEach(p2 => {
+                updatePair(p1, p2, 'opponent');
+            });
+        });
+    }
+
+    // Generate rounds
+    for (let roundNum = 1; roundNum <= rounds; roundNum++) {
+        const roundMatches = findBestMatch([...players], roundNum);
+        if (roundMatches && roundMatches.length > 0) {
+            schedule.push(roundMatches);
+        }
+    }
+
+    return schedule;
+}
+
+
+
+function generateSchedule(numPlayers, numCourts, players) {
+    if (numPlayers < 10) {
+        return generateScheduleForSmallGroup(numPlayers, numCourts, players);
+    }
+    return originalGenerateSchedule(numPlayers, numCourts, players);
+}
 
 
 function generateRound(availablePlayers, numCourts, pairHistory, roundNum, waitingPlayers) {
