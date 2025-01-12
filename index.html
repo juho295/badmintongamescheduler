@@ -119,9 +119,14 @@
             text-align: center;
         }
 
+        #playerInputs {
+            width:250px;
+        }
+
         #scheduleOutput {
             margin-top: 20px;
             text-align: left;
+            width:100%;
         }
 
         table {
@@ -255,10 +260,9 @@
 
 
         .waiting-players-table {
-            width: 140px; /* Slightly reduced from 150px */
+            width: 50px; /* Slightly reduced from 150px */
             min-width: 40px; /* Reduced from 50px */
-            max-width: 140px; /* Reduced from 150px */
-            margin-left: 10px;
+            max-width: 50px; /* Reduced from 150px */
         }
 
         @media (max-width: 1200px) {
@@ -276,10 +280,10 @@
         }
 
 
-        @media (max-width: 1030px) {
+        @media (max-width: 850px) {
             .waiting-players-table {
-                width: 100%;
-                min-width: 50px;
+                width: 150px;
+                min-width: 150px;
             }
 
             .container {
@@ -293,10 +297,6 @@
                 padding-left: 0;
             }
 
-            .waiting-players-table {
-                width: 100%;
-                max-width: none;
-            }
         }
 
 
@@ -961,10 +961,10 @@ function displaySchedule(schedule) {
 
         const container = document.createElement("div");
         container.style.display = "flex";
-        container.style.gap = "20px";
+        container.style.gap = "15px";
         container.style.marginBottom = "20px";
-        container.style.maxWidth = "100%";
-        container.style.overflowX = "auto";
+        container.style.maxWidth = "91%";
+        container.style.overflowX = "none";
 
         // Games table
         const roundTableDiv = document.createElement("div");
@@ -1067,7 +1067,33 @@ function displaySchedule(schedule) {
     // Add download button
     const downloadBtn = document.getElementById("downloadScheduleBtn");
     downloadBtn.style.display = "inline-block";
-    downloadBtn.style.marginBottom = "20px";
+    downloadBtn.style.marginBottom = "10px";
+
+
+    // Update download functionality to include waiting players
+    downloadBtn.onclick = function() {
+        let downloadText = "Badminton Game Schedule\n\n";
+        schedule.forEach(round => {
+            downloadText += `Round ${round[0].round}\n`;
+            round.forEach(match => {
+                downloadText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
+            });
+            if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+                downloadText += "\nWaiting Players:\n";
+                round[0].waitingPlayers.forEach(player => {
+                    downloadText += `${player}\n`;
+                });
+            }
+            downloadText += "\n";
+        });
+
+        const blob = new Blob([downloadText], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "badminton_schedule.txt";
+        link.click();
+    };
+
 
     // Update the event listener for the Show Pairing Information button
     document.getElementById("showPopupBtn").onclick = () => {
