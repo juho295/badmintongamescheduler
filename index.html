@@ -29,8 +29,8 @@
         .container {
             display: flex;
             justify-content: space-between;
-            width: 80%;
-            max-width: 1200px;
+            width: 90%; /* Increased from 80% to use more screen space */
+            max-width: 1400px; /* Increased from 1200px to allow more space */
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -45,12 +45,19 @@
         }
 
         .left-panel {
+            width: 35%; /* Reduced from 48% */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
+            padding-right: 20px;
         }
 
         .right-panel {
+            width: 63%; /* Increased from 48% */
             border-left: 1px solid #ddd;
             padding-left: 20px;
+            overflow-x: auto; /* Allow horizontal scroll if needed */
         }
 
         button {
@@ -71,13 +78,13 @@
             color: #333;
         }
 
-.input-group {
-            margin: 10px -20px;
+        .input-group {
+            margin: 10px 0;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             width: 100%;
-            max-width: 400px;
+            max-width: 350px; /* Reduced from 400px */
         }
 
         label {
@@ -88,11 +95,27 @@
             flex-shrink: 0; /* Prevent label from shrinking */
         }
 
+        .input-group label {
+            font-weight: bold;
+            text-align: right;
+            margin-right: 10px;
+            width: 180px; /* Reduced from 200px */
+            flex-shrink: 0;
+        }
+
         input {
             padding: 8px;
             font-size: 16px;
             width: 135px; /* Reduced from original 200px */
             margin: 5px 15px; /* Changed from 5px 10px to remove horizontal margin */
+            text-align: center;
+        }
+
+        .input-group input {
+            padding: 6px;
+            font-size: 14px; /* Slightly reduced from 16px */
+            width: 120px; /* Reduced from 135px */
+            margin: 5px 10px;
             text-align: center;
         }
 
@@ -119,6 +142,17 @@
         th {
             background-color: #f2f2f2;
         }
+
+        #scheduleOutput table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        #scheduleOutput td input {
+            width: 45%;
+            min-width: 80px;
+        }
+
 
         /* Pop-up styling */
         .popup {
@@ -212,6 +246,8 @@
         animation: spin 1s linear infinite;
     }
 
+
+
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -219,12 +255,28 @@
 
 
         .waiting-players-table {
-            width: 150px;
-            min-width: 50px;
-            max-width: 150px;
+            width: 140px; /* Slightly reduced from 150px */
+            min-width: 40px; /* Reduced from 50px */
+            max-width: 140px; /* Reduced from 150px */
+            margin-left: 10px;
         }
 
-        @media (max-width: 800px) {
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+            }
+
+            .left-panel {
+                width: 30%;
+            }
+
+            .right-panel {
+                width: 68%;
+            }
+        }
+
+
+        @media (max-width: 1030px) {
             .waiting-players-table {
                 width: 100%;
                 min-width: 50px;
@@ -239,6 +291,11 @@
                 width: 100%;
                 border-left: none;
                 padding-left: 0;
+            }
+
+            .waiting-players-table {
+                width: 100%;
+                max-width: none;
             }
         }
 
@@ -468,7 +525,7 @@ function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
     const schedule = [];
     const pairHistory = new Map();
     const playerGamesCount = {};
-    
+
     // Initialize game count for each player
     players.forEach(player => {
         playerGamesCount[player] = 0;
@@ -489,7 +546,7 @@ function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
     function findBestMatch(availablePlayers, roundNum) {
         const matches = [];
         let usedPlayers = [];
-        
+
         // Sort players by number of games played
         let remainingPlayers = [...availablePlayers].sort((a, b) => {
             const gamesDiff = playerGamesCount[a] - playerGamesCount[b];
@@ -533,11 +590,11 @@ function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
 
                             combinations.forEach(combo => {
                                 let score = totalGamesPlayed * 10; // Base score from games played
-                                
+
                                 // Add partner/opponent history penalties
                                 score += getPairScore(combo.team1[0], combo.team1[1], true) * 20;
                                 score += getPairScore(combo.team2[0], combo.team2[1], true) * 20;
-                                
+
                                 combo.team1.forEach(p1 => {
                                     combo.team2.forEach(p2 => {
                                         score += getPairScore(p1, p2, false) * 10;
@@ -565,14 +622,14 @@ function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
                     team1: bestMatch.team1,
                     team2: bestMatch.team2
                 };
-                
+
                 // Update games count for players in this match
                 updatePlayerGamesCount(match);
                 matches.push(match);
-                
+
                 // Update used players
                 usedPlayers = [...usedPlayers, ...bestMatch.team1, ...bestMatch.team2];
-                
+
                 // Remove used players from remaining players
                 remainingPlayers = remainingPlayers.filter(p => !usedPlayers.includes(p));
             } else {
@@ -890,97 +947,137 @@ function shuffle(array) {
 
 
 
-
 function displaySchedule(schedule) {
-	const scheduleOutput = document.getElementById("scheduleOutput");
-	scheduleOutput.innerHTML = "";
+    const scheduleOutput = document.getElementById("scheduleOutput");
+    scheduleOutput.innerHTML = "";
 
-	let scheduleText = "Badminton Game Schedule\n\n";
+    let scheduleText = "Badminton Game Schedule\n\n";
 
-	schedule.forEach(round => {
-		const roundTitle = document.createElement("h3");
-		roundTitle.textContent = `Round ${round[0].round}`;
-		scheduleOutput.appendChild(roundTitle);
-		scheduleText += `Round ${round[0].round}\n`;
+    schedule.forEach(round => {
+        const roundTitle = document.createElement("h3");
+        roundTitle.textContent = `Round ${round[0].round}`;
+        scheduleOutput.appendChild(roundTitle);
+        scheduleText += `Round ${round[0].round}\n`;
 
-		const container = document.createElement("div");
-		container.style.display = "flex";
-		container.style.gap = "20px";
-		container.style.marginBottom = "20px";
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.gap = "20px";
+        container.style.marginBottom = "20px";
+        container.style.maxWidth = "100%";
+        container.style.overflowX = "auto";
 
-		// Games table
-		const roundTableDiv = document.createElement("div");
-		roundTableDiv.style.flex = "1";
-		const roundTable = document.createElement("table");
-		const roundHeader = document.createElement("tr");
-		roundHeader.innerHTML = `<th>Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
-		roundTable.appendChild(roundHeader);
+        // Games table
+        const roundTableDiv = document.createElement("div");
+        roundTableDiv.style.flex = "1";
+        const roundTable = document.createElement("table");
+        roundTable.style.tableLayout = "fixed";
+        const roundHeader = document.createElement("tr");
+        roundHeader.innerHTML = `<th style="width: 60px;">Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
+        roundTable.appendChild(roundHeader);
 
-		round.forEach(match => {
-			const matchRow = document.createElement("tr");
-			matchRow.innerHTML = `
-				<td>${match.court}</td>
-				<td class="team1">${match.team1.join(" & ")}</td>
-				<td class="team2">${match.team2.join(" & ")}</td>
-			`;
-			roundTable.appendChild(matchRow);
-		});
-		roundTableDiv.appendChild(roundTable);
+        round.forEach(match => {
+            const matchRow = document.createElement("tr");
 
-		// Waiting players table with new class
-		if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
-			const waitingTableDiv = document.createElement("div");
-			waitingTableDiv.classList.add('waiting-players-table');
-			const waitingTable = document.createElement("table");
-			const waitingHeader = document.createElement("tr");
-			waitingHeader.innerHTML = `<th>Waiting Players</th>`;
-			waitingTable.appendChild(waitingHeader);
+            // Court cell
+            const courtCell = document.createElement("td");
+            courtCell.textContent = match.court;
+            matchRow.appendChild(courtCell);
 
-			round[0].waitingPlayers.forEach(player => {
-				const playerRow = document.createElement("tr");
-				playerRow.innerHTML = `<td>${player}</td>`;
-				waitingTable.appendChild(playerRow);
-			});
-			waitingTableDiv.appendChild(waitingTable);
-			container.appendChild(roundTableDiv);
-			container.appendChild(waitingTableDiv);
-		} else {
-			container.appendChild(roundTableDiv);
-		}
+            // Team 1 cell with editable players
+            const team1Cell = document.createElement("td");
+            match.team1.forEach((player, idx) => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = player;
+                input.style.width = "45%";
+                input.style.margin = "2px";
+                input.style.padding = "2px";
+                input.style.fontSize = "14px";
+                input.addEventListener('change', (e) => {
+                    match.team1[idx] = e.target.value;
+                });
+                team1Cell.appendChild(input);
+                if (idx === 0) team1Cell.appendChild(document.createTextNode(""));
+            });
+            matchRow.appendChild(team1Cell);
 
-		scheduleOutput.appendChild(container);
-	});
+            // Team 2 cell with editable players
+            const team2Cell = document.createElement("td");
+            match.team2.forEach((player, idx) => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = player;
+                input.style.width = "45%";
+                input.style.margin = "2px";
+                input.style.padding = "2px";
+                input.style.fontSize = "14px";
+                input.addEventListener('change', (e) => {
+                    match.team2[idx] = e.target.value;
+                });
+                team2Cell.appendChild(input);
+                if (idx === 0) team2Cell.appendChild(document.createTextNode(""));
+            });
+            matchRow.appendChild(team2Cell);
 
+            roundTable.appendChild(matchRow);
+        });
+        roundTableDiv.appendChild(roundTable);
+
+        // Waiting players table with editable inputs
+        if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+            const waitingTableDiv = document.createElement("div");
+            waitingTableDiv.classList.add('waiting-players-table');
+            const waitingTable = document.createElement("table");
+            const waitingHeader = document.createElement("tr");
+            waitingHeader.innerHTML = `<th>Waiting Players</th>`;
+            waitingTable.appendChild(waitingHeader);
+
+            round[0].waitingPlayers.forEach((player, idx) => {
+                const playerRow = document.createElement("tr");
+                const playerCell = document.createElement("td");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = player;
+                input.style.width = "90%";
+                input.style.margin = "2px";
+                input.style.padding = "2px";
+                input.style.fontSize = "14px";
+                input.addEventListener('change', (e) => {
+                    round[0].waitingPlayers[idx] = e.target.value;
+                });
+                playerCell.appendChild(input);
+                playerRow.appendChild(playerCell);
+                waitingTable.appendChild(playerRow);
+            });
+            waitingTableDiv.appendChild(waitingTable);
+            container.appendChild(roundTableDiv);
+            container.appendChild(waitingTableDiv);
+        } else {
+            container.appendChild(roundTableDiv);
+        }
+
+        scheduleOutput.appendChild(container);
+    });
+
+    // Make "Show Pairing Information" button more visible after schedule generation
+    const showPairingBtn = document.getElementById("showPopupBtn");
+    showPairingBtn.style.display = "inline-block";
+    showPairingBtn.style.marginBottom = "20px";
 
     // Add download button
     const downloadBtn = document.getElementById("downloadScheduleBtn");
     downloadBtn.style.display = "inline-block";
+    downloadBtn.style.marginBottom = "20px";
 
-    // Update download functionality to include waiting players
-    downloadBtn.onclick = function() {
-        let downloadText = "Badminton Game Schedule\n\n";
-        schedule.forEach(round => {
-            downloadText += `Round ${round[0].round}\n`;
-            downloadText += "Courts:\n";
-            round.forEach(match => {
-                downloadText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
-            });
-            if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
-                downloadText += "\nWaiting Players:\n";
-                round[0].waitingPlayers.forEach(player => {
-                    downloadText += `${player}\n`;
-                });
-            }
-            downloadText += "\n";
-        });
-
-        const blob = new Blob([downloadText], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "badminton_schedule.txt";
-        link.click();
+    // Update the event listener for the Show Pairing Information button
+    document.getElementById("showPopupBtn").onclick = () => {
+        const playerPairingInfo = getPlayerPairingInfo(currentSchedule);
+        displayPairingInfo(playerPairingInfo);
+        document.getElementById("popup").style.display = "flex";
     };
 }
+
+
 
 // Add new function to replace names in schedule
 function replaceNamesInSchedule() {
