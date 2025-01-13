@@ -16,10 +16,10 @@
     <title>Badminton Game Scheduler</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: monospace;
             background-color: #f4f4f9;
-            margin: 0;
-            padding-top: 20px;
+            /* margin: 0; */
+            /* padding-top: 20px; */
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -29,45 +29,117 @@
         .container {
             display: flex;
             justify-content: space-between;
-            width: 90%; /* Increased from 80% to use more screen space */
-            max-width: 1400px; /* Increased from 1200px to allow more space */
+            width: 100%; /* Increased from 80% to use more screen space */
+            /* max-width: 1400px; Increased from 1200px to allow more space */
             background-color: #ffffff;
-            border-radius: 8px;
+            /* border-radius: 8px; */
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            /* padding: 20px; */
         }
 
-        .left-panel, .right-panel {
+        /* .left-panel, .right-panel {
             width: 48%;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
+        } */
 
         .left-panel {
-            width: 35%; /* Reduced from 48% */
+            width: 32%; /* Reduced from 48% */
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            padding-right: 20px;
+            padding: 24px;
+            background-color: #f4f4f9;
         }
 
         .right-panel {
-            width: 63%; /* Increased from 48% */
+            width: 62%; /* Increased from 48% */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             border-left: 1px solid #ddd;
-            padding-left: 20px;
+            padding: 24px;
             overflow-x: auto; /* Allow horizontal scroll if needed */
+        }
+
+
+        .waiting-players-table {
+            width: 50px; /* Slightly reduced from 150px */
+            min-width: 40px; /* Reduced from 50px */
+            max-width: 50px; /* Reduced from 150px */
+        }
+
+        .schedule-table {
+            max-width: 100%
+        }
+
+        .has-waiting .schedule-table {
+            max-width: 92%
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+            }
+
+            .left-panel {
+                width: 30%;
+            }
+
+            .right-panel {
+                width: 68%;
+            }
+        }
+
+
+        @media (max-width: 850px) {
+
+            body {
+                margin: 0px;
+            }
+
+            .waiting-players-table {
+                min-width: 100%;
+            }
+
+            .container {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+                border-left: none;
+                padding: 30px 0px 30px 0px;
+            }
+
+            .input-group input[type=number] {
+                padding-left: 8px !important;
+            }
+
+            .has-waiting .schedule-table {
+                max-width: 100% !important
+            }
+
         }
 
         button {
             background-color: #4CAF50;
+            font-family: monospace;
             color: white;
-            border: none;
+            border: solid black 2px;
             padding: 10px 20px;
             margin: 10px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 13px;
+            min-width: 240px;
+        }
+
+        .secondary {
+            background-color: #f2f2f2;
+            color: black;
         }
 
         button:hover {
@@ -76,6 +148,13 @@
 
         h1 {
             color: #333;
+            font-size: 1.4em
+        }
+
+        h3 {
+            margin-bottom: 1em;
+            margin-top: 1.6em;
+            font-size: 16px;
         }
 
         .input-group {
@@ -83,8 +162,6 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            width: 100%;
-            max-width: 350px; /* Reduced from 400px */
         }
 
         label {
@@ -96,24 +173,30 @@
         }
 
         .input-group label {
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 300;
             text-align: right;
             margin-right: 10px;
             width: 180px; /* Reduced from 200px */
             flex-shrink: 0;
         }
 
+        .input-group input[type=number] {
+            padding: 8px 8px 8px 24px;
+            width: 48px;
+        }
+
         input {
+            font-size: 12px;
+            font-family: monospace;
+            width: 160px; /* Reduced from original 200px */
+            margin: 5px; /* Changed from 5px 10px to remove horizontal margin */
             padding: 8px;
-            font-size: 16px;
-            width: 135px; /* Reduced from original 200px */
-            margin: 5px 15px; /* Changed from 5px 10px to remove horizontal margin */
             text-align: center;
+            border-width: 1px;
         }
 
         .input-group input {
-            padding: 6px;
-            font-size: 14px; /* Slightly reduced from 16px */
             width: 120px; /* Reduced from 135px */
             margin: 5px 10px;
             text-align: center;
@@ -126,13 +209,12 @@
         #scheduleOutput {
             margin-top: 20px;
             text-align: left;
-            width:100%;
+            width:92%;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
 
         table, th, td {
@@ -140,7 +222,8 @@
         }
 
         th, td {
-            padding: 10px 5px 5px 10px;
+            padding: 5px;
+            font-size: 14px;
             text-align: center;
         }
 
@@ -150,14 +233,12 @@
 
         #scheduleOutput table {
             width: 100%;
-            margin-bottom: 15px;
         }
 
         #scheduleOutput td input {
             width: 45%;
-            min-width: 80px;
+            min-width: 100px;
         }
-
 
         /* Pop-up styling */
         .popup {
@@ -259,46 +340,6 @@
     }
 
 
-        .waiting-players-table {
-            width: 50px; /* Slightly reduced from 150px */
-            min-width: 40px; /* Reduced from 50px */
-            max-width: 50px; /* Reduced from 150px */
-        }
-
-        @media (max-width: 1200px) {
-            .container {
-                width: 95%;
-            }
-
-            .left-panel {
-                width: 30%;
-            }
-
-            .right-panel {
-                width: 68%;
-            }
-        }
-
-
-        @media (max-width: 850px) {
-            .waiting-players-table {
-                width: 150px;
-                min-width: 150px;
-            }
-
-            .container {
-                width: 95%;
-                flex-direction: column;
-            }
-
-            .left-panel, .right-panel {
-                width: 100%;
-                border-left: none;
-                padding-left: 0;
-            }
-
-        }
-
 
     </style>
 </head>
@@ -333,16 +374,16 @@
             <input type="number" id="maxPartnerRepeat" value="1" min="1" max="9">
         </div>
 
-            <h1>Enter Player Names</h1>
+            <h1 style="margin-top:48px;">Enter Player Names</h1>
             <div id="playerInputs"></div>
-            <button id="replaceNamesBtn">Replace Player Names in Schedule</button>
+            <button id="replaceNamesBtn" class="secondary">Replace Player Names in Schedule</button>
         </div>
 
         <div class="right-panel">
             <h1>Badminton Game Schedule</h1>
             <button id="generateScheduleBtn">Generate Schedule</button>
-            <button id="downloadScheduleBtn" style="display: none;">Download Schedule</button>
-            <button id="showPopupBtn">Show Pairing Information</button>
+            <button id="downloadScheduleBtn" class="secondary" style="display: none;">Download Schedule</button>
+            <button id="showPopupBtn" class="secondary">Show Pairing Information</button>
             <div id="scheduleOutput"></div>
         </div>
     </div>
@@ -961,10 +1002,11 @@ function displaySchedule(schedule) {
 
         const container = document.createElement("div");
         container.style.display = "flex";
-        container.style.gap = "15px";
+        container.style.gap = "12px";
         container.style.marginBottom = "20px";
-        container.style.maxWidth = "91%";
         container.style.overflowX = "none";
+        container.style.flexWrap = "wrap";
+        container.classList.add("schedule-table");
 
         // Games table
         const roundTableDiv = document.createElement("div");
@@ -972,7 +1014,7 @@ function displaySchedule(schedule) {
         const roundTable = document.createElement("table");
         roundTable.style.tableLayout = "fixed";
         const roundHeader = document.createElement("tr");
-        roundHeader.innerHTML = `<th style="width: 60px;">Court</th><th>Players (Team 1)</th><th>Players (Team 2)</th>`;
+        roundHeader.innerHTML = `<th style="width: 60px;">Court</th><th>Team 1</th><th>Team 2</th>`;
         roundTable.appendChild(roundHeader);
 
         round.forEach(match => {
@@ -989,10 +1031,10 @@ function displaySchedule(schedule) {
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = player;
-                input.style.width = "45%";
+                input.style.width = "40%";
                 input.style.margin = "2px";
-                input.style.padding = "2px";
-                input.style.fontSize = "14px";
+                input.style.padding = "4px";
+                input.style.fontSize = "12px";
                 input.addEventListener('change', (e) => {
                     match.team1[idx] = e.target.value;
                 });
@@ -1007,10 +1049,10 @@ function displaySchedule(schedule) {
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = player;
-                input.style.width = "45%";
+                input.style.width = "40%";
                 input.style.margin = "2px";
-                input.style.padding = "2px";
-                input.style.fontSize = "14px";
+                input.style.padding = "4px";
+                input.style.fontSize = "12px";
                 input.addEventListener('change', (e) => {
                     match.team2[idx] = e.target.value;
                 });
@@ -1025,6 +1067,7 @@ function displaySchedule(schedule) {
 
         // Waiting players table with editable inputs
         if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+            scheduleOutput.classList.add("has-waiting");
             const waitingTableDiv = document.createElement("div");
             waitingTableDiv.classList.add('waiting-players-table');
             const waitingTable = document.createElement("table");
@@ -1040,8 +1083,8 @@ function displaySchedule(schedule) {
                 input.value = player;
                 input.style.width = "90%";
                 input.style.margin = "2px";
-                input.style.padding = "2px";
-                input.style.fontSize = "14px";
+                input.style.padding = "4px";
+                input.style.fontSize = "12px";
                 input.addEventListener('change', (e) => {
                     round[0].waitingPlayers[idx] = e.target.value;
                 });
