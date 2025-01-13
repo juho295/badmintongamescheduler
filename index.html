@@ -1471,8 +1471,11 @@ generatePlayerInputs(parseInt(document.getElementById("numPlayers").value));
 
 // Set zoom level to when the page loads
 window.onload = function () {
-    document.body.style.zoom = "1.25";
+    if (window.innerWidth > 900) {
+        document.body.style.zoom = "1.25";
+    }
 };
+
 
 </script>
 
