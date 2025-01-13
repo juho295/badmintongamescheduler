@@ -15,6 +15,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://storage.googleapis.com https://www.google-analytics.com;">
     <title>Badminton Game Scheduler</title>
     <style>
+
         body {
             font-family: monospace;
             background-color: #f4f4f9;
@@ -338,7 +339,6 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
-
 
 
     </style>
@@ -1468,7 +1468,13 @@ document.getElementById("numPlayers").addEventListener("change", (e) => {
 
 // Initialize player inputs
 generatePlayerInputs(parseInt(document.getElementById("numPlayers").value));
-    </script>
+
+// Set zoom level to when the page loads
+window.onload = function () {
+    document.body.style.zoom = "1.25";
+};
+
+</script>
 
 
 
