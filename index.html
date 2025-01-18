@@ -1202,7 +1202,6 @@ function replaceNamesInSchedule() {
 }
 
 
-
 function getPlayerPairingInfo(schedule) {
     const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
     const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
@@ -1212,17 +1211,37 @@ function getPlayerPairingInfo(schedule) {
     let opponentInstances = new Set();
     let partnerInstances = new Set();
 
+    // Get total number of players from the first round
+    const allPlayers = new Set();
+    schedule[0].forEach(match => {
+        [...match.team1, ...match.team2].forEach(player => allPlayers.add(player));
+        if (match.waitingPlayers) {
+            match.waitingPlayers.forEach(player => allPlayers.add(player));
+        }
+    });
+
+    // Initialize opponent count for all players
+    allPlayers.forEach(player => {
+        playerOpponentCount[player] = {};
+        playerPartnerCount[player] = {};
+        // Initialize counts to 0 for all possible opponents
+        allPlayers.forEach(otherPlayer => {
+            if (player !== otherPlayer) {
+                playerOpponentCount[player][otherPlayer] = 0;
+            }
+        });
+    });
+
+    // Count all pairings
     schedule.forEach(round => {
         round.forEach(match => {
             [match.team1, match.team2].forEach(team => {
                 team.forEach(player => {
-                    if (!playerOpponentCount[player]) playerOpponentCount[player] = {};
-                    if (!playerPartnerCount[player]) playerPartnerCount[player] = {};
-
                     // Count opponents
                     const opponents = team === match.team1 ? match.team2 : match.team1;
                     opponents.forEach(opponent => {
-                        playerOpponentCount[player][opponent] = (playerOpponentCount[player][opponent] || 0) + 1;
+                        playerOpponentCount[player][opponent]++;
+                        playerOpponentCount[opponent][player]++;
                     });
 
                     // Count partners
@@ -1233,6 +1252,22 @@ function getPlayerPairingInfo(schedule) {
                     });
                 });
             });
+        });
+    });
+
+    // Find missing pairings
+    const missingPairings = [];
+    const processedPairs = new Set();
+
+    allPlayers.forEach(player1 => {
+        allPlayers.forEach(player2 => {
+            if (player1 !== player2) {
+                const pairKey = [player1, player2].sort().join('-');
+                if (!processedPairs.has(pairKey) && playerOpponentCount[player1][player2] === 0) {
+                    missingPairings.push({ player: player1, opponent: player2 });
+                    processedPairs.add(pairKey);
+                }
+            }
         });
     });
 
@@ -1248,7 +1283,7 @@ function getPlayerPairingInfo(schedule) {
 
     for (let player in playerPartnerCount) {
         for (let partner in playerPartnerCount[player]) {
-            if (playerPartnerCount[player][partner] > maxPartnerRepeat - maxPartnerRepeat) { //edit here
+            if (playerPartnerCount[player][partner] > maxPartnerRepeat) {
                 const pair = [player, partner].sort().join('-');
                 partnerInstances.add(pair);
             }
@@ -1268,12 +1303,14 @@ function getPlayerPairingInfo(schedule) {
     return {
         opponentInstances: formattedOpponents,
         partnerInstances: formattedPartners,
+        missingPairings: missingPairings,
         thresholds: {
             opponent: maxOpponentRepeat,
             partner: maxPartnerRepeat
         }
     };
 }
+
 
 
 function getPlayerRankForSort(playerName) {
@@ -1283,15 +1320,17 @@ function getPlayerRankForSort(playerName) {
 function displayPairingInfo(pairingInfo) {
     // Update the threshold displays in the headers
     document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
-    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner - pairingInfo.thresholds.partner; //edit here
+    document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner;
 
     const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
     const partnerTableBody = document.getElementById("partnerTable").getElementsByTagName('tbody')[0];
+    const missingPairingsTableBody = document.getElementById("missingPairingsTable").getElementsByTagName('tbody')[0];
 
     opponentTableBody.innerHTML = "";
     partnerTableBody.innerHTML = "";
+    missingPairingsTableBody.innerHTML = "";
 
-    // Sort and display instances as before
+    // Sort instances
     const sortedOpponents = [...pairingInfo.opponentInstances].sort((a, b) => {
         return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
     });
@@ -1300,6 +1339,11 @@ function displayPairingInfo(pairingInfo) {
         return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
     });
 
+    const sortedMissingPairings = [...pairingInfo.missingPairings].sort((a, b) => {
+        return getPlayerRankForSort(a.player) - getPlayerRankForSort(b.player);
+    });
+
+    // Display instances
     sortedOpponents.forEach(pair => {
         const row = opponentTableBody.insertRow();
         row.insertCell(0).textContent = pair.player;
@@ -1312,6 +1356,12 @@ function displayPairingInfo(pairingInfo) {
         row.insertCell(0).textContent = pair.player;
         row.insertCell(1).textContent = pair.partner;
         row.insertCell(2).textContent = getRoundsForPartner(pair.player, pair.partner);
+    });
+
+    sortedMissingPairings.forEach(pair => {
+        const row = missingPairingsTableBody.insertRow();
+        row.insertCell(0).textContent = pair.player;
+        row.insertCell(1).textContent = pair.opponent;
     });
 }
 
@@ -1433,9 +1483,10 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
 document.getElementById("replaceNamesBtn").addEventListener("click", replaceNamesInSchedule);
 
 // Update the popup HTML to have dynamic headers
+// Update the popup HTML to include the missing pairings section
 document.querySelector('.popup-content').innerHTML = `
     <span class="close-btn" id="closePopupBtn">&times;</span>
-    <h2>Repeated Player Pairing Information</h2>
+    <h2>Player Pairing Information</h2>
 
     <h3 id="opponentTableHeader">Players Repeated More Than <span class="opponent-threshold">2</span> Times Against Same Opponent</h3>
     <table id="opponentTable">
@@ -1457,6 +1508,18 @@ document.querySelector('.popup-content').innerHTML = `
                 <th>Player</th>
                 <th>Partner</th>
                 <th>Round(s)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <h3>Players Who Haven't Played Against Each Other</h3>
+    <table id="missingPairingsTable">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Never Played Against</th>
             </tr>
         </thead>
         <tbody>
