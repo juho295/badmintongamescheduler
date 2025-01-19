@@ -1204,7 +1204,7 @@ function replaceNamesInSchedule() {
 
 function getPlayerPairingInfo(schedule) {
     const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
-    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value) + 2;
 
     let playerOpponentCount = {};
     let playerPartnerCount = {};
