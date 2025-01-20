@@ -1319,7 +1319,7 @@ function getPlayerRankForSort(playerName) {
 
 function displayPairingInfo(pairingInfo) {
     // Update the threshold displays in the headers
-    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
+    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent - 2;
     document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner;
 
     const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
