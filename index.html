@@ -1482,6 +1482,18 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
 // Add event listener for the new replace names button
 document.getElementById("replaceNamesBtn").addEventListener("click", replaceNamesInSchedule);
 
+// event listener for selecting all text in player name field
+document.addEventListener('DOMContentLoaded', function() {
+    const playerInputs = document.getElementById('playerInputs');
+    
+    // Add event listener to dynamically created input fields
+    playerInputs.addEventListener('focus', function(event) {
+        if (event.target.tagName === 'INPUT') {
+            event.target.select();
+        }
+    }, true);
+});
+
 // Update the popup HTML to have dynamic headers
 // Update the popup HTML to include the missing pairings section
 document.querySelector('.popup-content').innerHTML = `
