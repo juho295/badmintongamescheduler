@@ -1146,28 +1146,53 @@ function displaySchedule(schedule) {
     downloadBtn.style.marginBottom = "10px";
 
 
-    // Update download functionality to include waiting players
+    // download functionality
     downloadBtn.onclick = function() {
-        let downloadText = "Badminton Game Schedule\n\n";
+        // Generate current format
+        let currentFormatText = "Badminton Game Schedule\n\n";
         schedule.forEach(round => {
-            downloadText += `Round ${round[0].round}\n`;
+            currentFormatText += `Round ${round[0].round}\n`;
             round.forEach(match => {
-                downloadText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
+                currentFormatText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
             });
             if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
-                downloadText += "\nWaiting Players:\n";
+                currentFormatText += "\nWaiting Players:\n";
                 round[0].waitingPlayers.forEach(player => {
-                    downloadText += `${player}\n`;
+                    currentFormatText += `${player}\n`;
                 });
             }
-            downloadText += "\n";
+            currentFormatText += "\n";
         });
 
-        const blob = new Blob([downloadText], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "badminton_schedule.txt";
-        link.click();
+        // Generate desired format
+        let desiredFormatText = '';
+        schedule.forEach(round => {
+            // Round header
+            desiredFormatText += `\t\t${round[0].round}R\t\t\t\t\n`;
+            desiredFormatText += `CRT\t이름\t이름\t점수\t점수\t이름\t이름\n`;
+            
+            // Match details
+            round.forEach(match => {
+                desiredFormatText += `${match.court}\t${match.team1[0]}\t${match.team1[1]}\t\t\t${match.team2[0]}\t${match.team2[1]}\n`;
+            });
+        });
+
+        // Create and trigger downloads for both formats
+        const downloadFile = (content, filename) => {
+            const blob = new Blob([content], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // Download both formats
+        downloadFile(currentFormatText, "badminton_schedule_eng.txt");
+        setTimeout(() => {
+            downloadFile(desiredFormatText, "badminton_schedule_kor.txt");
+        }, 100);
     };
 
 
