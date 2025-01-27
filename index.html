@@ -94,7 +94,7 @@
         }
 
         #uploadPlayerNames{
-            min-width: 80px;
+            min-width: 240px;
             display: flex;
             justify-content: center;
             background-color: #f2f2f2;
@@ -407,10 +407,10 @@
             <div id="playerInputs"></div>
             <button id="replaceNamesBtn">Replace Player Names in Schedule</button>
         <div class="input-group">
-            <label for="playerNameFile" id="uploadPlayerNames">Upload Player Names</label>
+            <label for="playerNameFile" id="uploadPlayerNames">Upload Player Names from .txt</label>
             <input type="file" id="playerNameFile" accept=".txt">
         </div>
-    
+            <button id="uploadPlayerNamesBtn" class="secondary">Upload Player Names from Clipboard</button>
         </div>
         <div class="right-panel">
             <h1>Badminton Game Schedule</h1>
@@ -1490,6 +1490,34 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
         }
     }, 100);
 
+});
+
+
+document.getElementById("uploadPlayerNamesBtn").addEventListener("click", () => {
+    navigator.clipboard.readText().then(text => {
+    
+        // Get current number of players
+        const numPlayers = parseInt(document.getElementById("numPlayers").value);        
+        const content = text;
+        const playerNames = content.trim().split('\n').map(name => name.trim());
+        // Validate number of names
+        if (playerNames.length !== numPlayers) {
+            alert(`Please upload exactly ${numPlayers} player names.`);
+            uploadBtn.textContent = "Choose File";
+            return;
+        }
+        // Update player name inputs
+        playerNames.forEach((name, index) => {
+            const inputId = `player${index + 1}`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = name;
+            }
+        });
+
+      }).catch(err => {
+        console.error("Failed to read from clipboard: ", err);
+    });
 });
 
 
