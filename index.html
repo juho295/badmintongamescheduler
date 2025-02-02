@@ -394,7 +394,10 @@
                 <label for="numPlayers">Number of Players:</label>
                 <input type="number" id="numPlayers" value="12" min="8" max="20">
             </div>
-
+            <div class="input-group">
+                <label for="numRounds">Number of Rounds:</label>
+                <input type="number" id="numRounds" value="8" min="4" max="13">
+            </div>            
         <div class="input-group">
             <label for="maxOpponentRepeat">Desired Max Same Opponent:</label>
             <input type="number" id="maxOpponentRepeat" value="2" min="1" max="9">
@@ -506,18 +509,19 @@ function originalGenerateSchedule(numPlayers, numCourts, players) {
     // Initialize player ranks at the start
     initializePlayerRanks(players);
 
-    const rounds = 9;
+    const rounds = parseInt(document.getElementById('numRounds').value);  // Get rounds from input
     const playersPerRound = numCourts * 4;
     const playerStats = {};
 
+    
     // Initialize player stats and validate feasibility
-    const maxPartnersPerPlayer = Math.min(numPlayers - 1, rounds);
-    const minRequiredPartners = rounds;
-
-    if (maxPartnersPerPlayer < minRequiredPartners) {
-        console.warn("Warning: Not enough players to avoid partner repetition");
+    const maxPartnersPerPlayer = parseInt(document.getElementById('maxPartnerRepeat').value)
+    const minRequiredMaxPartner = rounds < 10 ? 1 : 2;
+    if (maxPartnersPerPlayer < minRequiredMaxPartner) {
+        alert("Warning: Not enough players to avoid partner repetition");
         return null;
     }
+    
 
     // Initialize player stats
     players.forEach(player => {
@@ -589,16 +593,12 @@ function originalGenerateSchedule(numPlayers, numCourts, players) {
     return bestSchedule || [];
 }
 
-
-
-
-
-
 function generateScheduleForSmallGroup(numPlayers, numCourts, players) {
-    const rounds = 9;
+    const rounds = parseInt(document.getElementById('numRounds').value);
     const schedule = [];
     const pairHistory = new Map();
     const playerGamesCount = {};
+
 
     // Initialize game count for each player
     players.forEach(player => {
@@ -1148,52 +1148,55 @@ function displaySchedule(schedule) {
 
     // download functionality
     downloadBtn.onclick = function() {
-        // Generate current format
-        let currentFormatText = "Badminton Game Schedule\n\n";
-        schedule.forEach(round => {
-            currentFormatText += `Round ${round[0].round}\n`;
-            round.forEach(match => {
-                currentFormatText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
-            });
-            if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
-                currentFormatText += "\nWaiting Players:\n";
-                round[0].waitingPlayers.forEach(player => {
-                    currentFormatText += `${player}\n`;
-                });
-            }
-            currentFormatText += "\n";
+    const rounds = parseInt(document.getElementById('numRounds').value);
+    
+    // Generate current format
+    let currentFormatText = "Badminton Game Schedule\n\n";
+    schedule.forEach(round => {
+        currentFormatText += `Round ${round[0].round}\n`;
+        round.forEach(match => {
+            currentFormatText += `Court ${match.court}: ${match.team1.join(" & ")} vs ${match.team2.join(" & ")}\n`;
         });
-
-        // Generate desired format
-        let desiredFormatText = '';
-        schedule.forEach(round => {
-            // Round header
-            desiredFormatText += `\t\t${round[0].round}R\t\t\t\t\n`;
-            desiredFormatText += `CRT\t이름\t이름\t점수\t점수\t이름\t이름\n`;
-            
-            // Match details
-            round.forEach(match => {
-                desiredFormatText += `${match.court}\t${match.team1[0]}\t${match.team1[1]}\t\t\t${match.team2[0]}\t${match.team2[1]}\n`;
+        if (round[0].waitingPlayers && round[0].waitingPlayers.length > 0) {
+            currentFormatText += "\nWaiting Players:\n";
+            round[0].waitingPlayers.forEach(player => {
+                currentFormatText += `${player}\n`;
             });
+        }
+        currentFormatText += "\n";
+    });
+
+    // Generate desired format
+    let desiredFormatText = '';
+    schedule.forEach(round => {
+        // Round header
+        desiredFormatText += `\t\t${round[0].round}R\t\t\t\t\n`;
+        desiredFormatText += `CRT\t이름\t이름\t점수\t점수\t이름\t이름\n`;
+        
+        // Match details
+        round.forEach(match => {
+            desiredFormatText += `${match.court}\t${match.team1[0]}\t${match.team1[1]}\t\t\t${match.team2[0]}\t${match.team2[1]}\n`;
         });
+    });
 
-        // Create and trigger downloads for both formats
-        const downloadFile = (content, filename) => {
-            const blob = new Blob([content], { type: "text/plain" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
-        // Download both formats
-        downloadFile(currentFormatText, "badminton_schedule_eng.txt");
-        setTimeout(() => {
-            downloadFile(desiredFormatText, "badminton_schedule_kor.txt");
-        }, 100);
+    // Create and trigger downloads for both formats
+    const downloadFile = (content, filename) => {
+        const blob = new Blob([content], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
+
+    // Download both formats
+    downloadFile(currentFormatText, "badminton_schedule_eng.txt");
+    setTimeout(() => {
+        downloadFile(desiredFormatText, "badminton_schedule_kor.txt");
+    }, 100);
+};
+
 
 
     // Update the event listener for the Show Pairing Information button
@@ -1242,8 +1245,7 @@ function replaceNamesInSchedule() {
 
 function getPlayerPairingInfo(schedule) {
     const maxPartnerRepeat = parseInt(document.getElementById('maxPartnerRepeat').value);
-    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value) + 2;
-
+    const maxOpponentRepeat = parseInt(document.getElementById('maxOpponentRepeat').value);
     let playerOpponentCount = {};
     let playerPartnerCount = {};
     let opponentInstances = new Set();
@@ -1312,7 +1314,8 @@ function getPlayerPairingInfo(schedule) {
     // Find instances exceeding thresholds
     for (let player in playerOpponentCount) {
         for (let opponent in playerOpponentCount[player]) {
-            if (playerOpponentCount[player][opponent] > maxOpponentRepeat) {
+            if ((playerOpponentCount[player][opponent])/2 > maxOpponentRepeat) {
+                //alert(playerOpponentCount[player][opponent]);
                 const pair = [player, opponent].sort().join('-');
                 opponentInstances.add(pair);
             }
@@ -1357,7 +1360,7 @@ function getPlayerRankForSort(playerName) {
 
 function displayPairingInfo(pairingInfo) {
     // Update the threshold displays in the headers
-    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent - 2;
+    document.querySelector('.opponent-threshold').textContent = pairingInfo.thresholds.opponent;
     document.querySelector('.partner-threshold').textContent = pairingInfo.thresholds.partner;
 
     const opponentTableBody = document.getElementById("opponentTable").getElementsByTagName('tbody')[0];
@@ -1490,6 +1493,17 @@ document.getElementById("generateScheduleBtn").addEventListener("click", () => {
         alert("Need at least 4 players to generate a schedule");
         return;
     }
+
+    document.getElementById("numRounds").addEventListener("change", (e) => {
+    const newNum = parseInt(e.target.value);
+    if (newNum >= 4 && newNum <= 13) {
+        // Valid number of rounds
+    } else {
+        alert("Please enter a number between 4 and 13 rounds");
+        return;
+    }
+});
+
 
     // Show loading overlay
     loadingOverlay.classList.add("active");
