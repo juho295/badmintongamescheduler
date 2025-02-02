@@ -82,7 +82,7 @@
         }
 
        
-        button, #uploadPlayerNames {
+        button, #uploadPlayerNames, #uploadScheduleFile {
             background-color: #4CAF50;
             font-family: monospace;
             color: white;
@@ -94,13 +94,18 @@
             min-width: 240px;
         }
 
-        #uploadPlayerNames{
+        #uploadPlayerNames, #uploadScheduleFile{
             min-width: 240px;
             display: flex;
             justify-content: center;
             background-color: #f2f2f2;
             color: black;
         }
+
+        #uploadScheduleFile {
+            margin-bottom:0px;
+        }
+        
 
         .secondary {
             background-color: #f2f2f2;
@@ -411,8 +416,12 @@
             <div id="playerInputs"></div>
             <button id="replaceNamesBtn">Replace Player Names in Schedule</button>
         <div class="input-group">
+            <label for="scheduleFile" id="uploadScheduleFile">Upload Schedule File .txt</label>
+            <input type="file" id="scheduleFile" accept=".txt">
+        </div>
+            <div class="input-group">
             <label for="playerNameFile" id="uploadPlayerNames">Upload Player Names from .txt</label>
-            <input type="file" id="playerNameFile" accept=".txt">
+            <input type="file" id="playerNameFile" accept=".txt">            
         </div>
             <button id="uploadPlayerNamesBtn" class="secondary">Upload Player Names from Clipboard</button>
         </div>
@@ -1607,6 +1616,132 @@ document.getElementById("playerNameFile").addEventListener("change", function(ev
     reader.readAsText(file);
 });
 
+// upload schedule file
+document.getElementById('scheduleFile').addEventListener('change', handleScheduleFileUpload);
+
+// Add this function to parse the schedule file
+function handleScheduleFileUpload(content) {
+    try {
+        // Split content into lines and remove empty lines
+        const lines = content.split('\n').filter(line => line.trim());
+        const schedule = [];
+        let currentRound = null;
+        let currentMatches = [];
+        
+        lines.forEach(line => {
+            if (line.trim() === 'Badminton Game Schedule') {
+                return;
+            }
+            
+            // Check if this is a round header
+            if (line.trim().startsWith('Round')) {
+                if (currentRound !== null && currentMatches.length > 0) {
+                    schedule.push(currentMatches);
+                }
+                currentRound = parseInt(line.match(/Round (\d+)/)[1]);
+                currentMatches = [];
+                return;
+            }
+            
+            // Parse match line (Court X: Player1 & Player2 vs Player3 & Player4)
+            if (line.includes('Court')) {
+                const match = parseMatchLine(line, currentRound);
+                if (match) {
+                    currentMatches.push(match);
+                }
+            }
+        });
+        
+        // Add the last round if it exists
+        if (currentMatches.length > 0) {
+            schedule.push(currentMatches);
+        }
+        
+        return schedule;
+    } catch (error) {
+        console.error('Error parsing schedule file:', error);
+        return null;
+    }
+}
+
+function parseMatchLine(line, roundNum) {
+    // Match pattern: "Court X: Player1 & Player2 vs Player3 & Player4"
+    const regex = /Court (\d+): (.*?) & (.*?) vs (.*?) & (.*)/;
+    const match = line.match(regex);
+    
+    if (!match) return null;
+    
+    return {
+        round: roundNum,
+        court: parseInt(match[1]),
+        team1: [match[2].trim(), match[3].trim()],
+        team2: [match[4].trim(), match[5].trim()],
+        waitingPlayers: [] // Initialize empty waiting players array
+    };
+}
+
+// Add this function to handle the file upload
+function handleScheduleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        const content = e.target.result;
+        const parsedSchedule = parseScheduleFile(content);
+        
+        if (parsedSchedule) {
+            // Update the global currentSchedule
+            currentSchedule = parsedSchedule;
+            
+            // Update the number of courts based on the uploaded schedule
+            const numCourtsInput = document.getElementById('numCourts');
+            if (parsedSchedule[0] && parsedSchedule[0].length) {
+                numCourtsInput.value = parsedSchedule[0].length;
+            }
+            
+            // Update the number of rounds based on the uploaded schedule
+            const numRoundsInput = document.getElementById('numRounds');
+            if (parsedSchedule.length) {
+                numRoundsInput.value = parsedSchedule.length;
+            }
+            
+            // Get unique players from the schedule
+            const players = new Set();
+            parsedSchedule.forEach(round => {
+                round.forEach(match => {
+                    match.team1.forEach(player => players.add(player));
+                    match.team2.forEach(player => players.add(player));
+                });
+            });
+            
+            // Update the number of players
+            const numPlayersInput = document.getElementById('numPlayers');
+            numPlayersInput.value = players.size;
+            
+            // Generate player input fields and populate them
+            generatePlayerInputs(players.size);
+            Array.from(players).forEach((player, index) => {
+                const input = document.getElementById(`player${index + 1}`);
+                if (input) {
+                    input.value = player;
+                }
+            });
+            
+            // Display the schedule
+            displaySchedule(parsedSchedule);
+        } else {
+            alert('Error parsing schedule file. Please make sure the format matches the expected format.');
+        }
+    };
+    
+    reader.onerror = () => {
+        alert('Error reading file');
+    };
+    
+    reader.readAsText(file);
+}
 
 // Add event listener for the new replace names button
 document.getElementById("replaceNamesBtn").addEventListener("click", replaceNamesInSchedule);
@@ -1628,6 +1763,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, true);
 });
+
+// Add this function to parse the schedule file
+function parseScheduleFile(content) {
+    try {
+        // Split content into lines and remove empty lines
+        const lines = content.split('\n').filter(line => line.trim());
+        const schedule = [];
+        let currentRound = null;
+        let currentMatches = [];
+        
+        lines.forEach(line => {
+            if (line.trim() === 'Badminton Game Schedule') {
+                return;
+            }
+            
+            // Check if this is a round header
+            if (line.trim().startsWith('Round')) {
+                if (currentRound !== null && currentMatches.length > 0) {
+                    schedule.push(currentMatches);
+                }
+                currentRound = parseInt(line.match(/Round (\d+)/)[1]);
+                currentMatches = [];
+                return;
+            }
+            
+            // Parse match line (Court X: Player1 & Player2 vs Player3 & Player4)
+            if (line.includes('Court')) {
+                const match = parseMatchLine(line, currentRound);
+                if (match) {
+                    currentMatches.push(match);
+                }
+            }
+        });
+        
+        // Add the last round if it exists
+        if (currentMatches.length > 0) {
+            schedule.push(currentMatches);
+        }
+        
+        return schedule;
+    } catch (error) {
+        console.error('Error parsing schedule file:', error);
+        return null;
+    }
+}
+
+function parseMatchLine(line, roundNum) {
+    // Match pattern: "Court X: Player1 & Player2 vs Player3 & Player4"
+    const regex = /Court (\d+): (.*?) & (.*?) vs (.*?) & (.*)/;
+    const match = line.match(regex);
+    
+    if (!match) return null;
+    
+    return {
+        round: roundNum,
+        court: parseInt(match[1]),
+        team1: [match[2].trim(), match[3].trim()],
+        team2: [match[4].trim(), match[5].trim()],
+        waitingPlayers: [] // Initialize empty waiting players array
+    };
+}
 
 // Update the popup HTML to have dynamic headers
 // Update the popup HTML to include the missing pairings section
@@ -1696,6 +1892,9 @@ document.getElementById("numPlayers").addEventListener("change", (e) => {
         generatePlayerInputs(12);
     }
 });
+
+//document.getElementById('scheduleFile').addEventListener('change', handleScheduleFileUpload);
+
 
 // Initialize player inputs
 generatePlayerInputs(parseInt(document.getElementById("numPlayers").value));
