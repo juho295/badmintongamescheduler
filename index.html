@@ -10,6 +10,7 @@
 
   gtag('config', 'G-SJQK0053K2');
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://storage.googleapis.com https://www.google-analytics.com;">
@@ -1705,6 +1706,136 @@ window.onload = function () {
         document.body.style.zoom = "1.15";
     }
 };
+
+
+// Function to create and download pairings information as an image
+function downloadPairingsAsImage() {
+    const popup = document.querySelector('.popup-content');
+    
+    // Create a temporary container
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.style.width = '800px';
+    tempContainer.style.backgroundColor = 'white';
+    tempContainer.style.padding = '20px';
+    document.body.appendChild(tempContainer);
+    
+    // Clone the popup content
+    const tempContent = popup.cloneNode(true);
+    
+    // Remove the close button
+    const closeBtn = tempContent.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.remove();
+    }
+    
+    // Remove the download button from the clone
+    const downloadBtn = tempContent.querySelector('button');
+    if (downloadBtn) {
+        downloadBtn.remove();
+    }
+    
+    // Reset popup styling that might interfere with the capture
+    tempContent.style.height = 'auto';
+    tempContent.style.maxHeight = 'none';
+    tempContent.style.overflow = 'visible';
+    tempContent.style.position = 'static';
+    tempContent.style.transform = 'none';
+    tempContent.style.width = '100%';
+    
+    // Add the content to our temporary container
+    tempContainer.appendChild(tempContent);
+    
+    // Style all tables in the cloned content
+    const tables = tempContent.getElementsByTagName('table');
+    Array.from(tables).forEach(table => {
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.marginBottom = '20px';
+        table.style.fontSize = '14px';
+        
+        // Style table cells
+        const cells = table.getElementsByTagName('td');
+        Array.from(cells).forEach(cell => {
+            cell.style.border = '1px solid #ddd';
+            cell.style.padding = '8px';
+            cell.style.textAlign = 'left';
+        });
+        
+        // Style table headers
+        const headers = table.getElementsByTagName('th');
+        Array.from(headers).forEach(header => {
+            header.style.border = '1px solid #ddd';
+            header.style.padding = '8px';
+            header.style.backgroundColor = '#f4f4f4';
+            header.style.fontWeight = 'bold';
+        });
+    });
+    
+    // Style headings
+    const headings = tempContent.querySelectorAll('h2, h3');
+    headings.forEach(heading => {
+        heading.style.color = '#333';
+        heading.style.marginTop = '20px';
+        heading.style.marginBottom = '10px';
+    });
+
+    // Use html2canvas with the temporary container
+    html2canvas(tempContainer, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher resolution
+        logging: false,
+        width: 1000,
+        height: tempContainer.scrollHeight + 300,
+        windowWidth: 1000,
+        windowHeight: tempContainer.scrollHeight + 300,
+        useCORS: true,
+        onclone: function(clonedDoc) {
+            const clonedContent = clonedDoc.querySelector('.popup-content');
+            if (clonedContent) {
+                clonedContent.style.transform = 'none';
+            }
+        }
+    }).then(canvas => {
+        // Convert canvas to image and download
+        const link = document.createElement('a');
+        link.download = 'pairing_information.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(tempContainer);
+    }).catch(err => {
+        console.error('Error generating image:', err);
+        alert('Error generating image. Please try again.');
+        document.body.removeChild(tempContainer);
+    });
+}
+
+// Add download button to popup
+const popupContent = document.querySelector('.popup-content');
+const downloadButton = document.createElement('button');
+downloadButton.textContent = 'Download as Image';
+downloadButton.style.marginTop = '20px';
+downloadButton.style.marginBottom = '20px';
+downloadButton.style.padding = '8px 16px';
+downloadButton.style.cursor = 'pointer';
+downloadButton.style.display = 'block';
+downloadButton.onclick = downloadPairingsAsImage;
+
+// Add button after the last table
+const lastTable = popupContent.querySelector('table:last-of-type');
+if (lastTable) {
+    lastTable.parentNode.insertBefore(downloadButton, lastTable.nextSibling);
+}
+
+// Add required html2canvas library to the head section
+const script = document.createElement('script');
+script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+document.head.appendChild(script);
+
 
 
 const defaultSchedule = [
